@@ -10,15 +10,6 @@ const Navbar = () => {
   const [passwordVisible, setPasswordVisible] = useState(false);
   const [loginData, setLoginData] = useState({ email: "", password: "" });
   const [signupData, setSignupData] = useState({ firstName: "", lastName: "", email: "", password: "" });
-  const [user, setUser] = useState(null);
-  
-
-  useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      setUser({ name: "User" }); // Change this to fetch user data if needed
-    }
-  }, []);
 
   useEffect(() => {
     if (showLogin || showSignup) {
@@ -32,27 +23,23 @@ const Navbar = () => {
     e.preventDefault();
     try {
       const response = await axios.post("http://localhost:3000/api/auth/login", loginData);
-
-      localStorage.setItem("token", response.data.token);
-      setUser({ name: "User" });
-
+      
       Swal.fire({
         title: "Success!",
         text: "Login successful!",
         icon: "success",
-        confirmButtonText: "OK",
+        confirmButtonText: "OK"
       });
 
+      localStorage.setItem("token", response.data.token);
       setShowLogin(false);
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
+      window.location.href = "/";
     } catch (error) {
       Swal.fire({
         title: "Error!",
         text: "Login failed. Please check your credentials.",
         icon: "error",
-        confirmButtonText: "Try Again",
+        confirmButtonText: "Try Again"
       });
     }
   };
@@ -66,7 +53,7 @@ const Navbar = () => {
         title: "Success!",
         text: "Signup successful! Please log in.",
         icon: "success",
-        confirmButtonText: "OK",
+        confirmButtonText: "OK"
       });
 
       setShowSignup(false);
@@ -76,22 +63,9 @@ const Navbar = () => {
         title: "Error!",
         text: "Signup failed. Please try again.",
         icon: "error",
-        confirmButtonText: "Try Again",
+        confirmButtonText: "Try Again"
       });
     }
-  };
-
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    setUser(null);
-    Swal.fire({
-      title: "Logged Out!",
-      text: "You have been logged out.",
-      icon: "info",
-      confirmButtonText: "OK",
-    }).then(() => {
-      window.location.href = "/";
-    });
   };
 
   return (
@@ -104,11 +78,7 @@ const Navbar = () => {
         <li><Link to="/reviews">Reviews</Link></li>
       </ul>
 
-      {user ? (
-        <button className="logout-btn" onClick={handleLogout}>Logout</button>
-      ) : (
-        <button className="login-btn" onClick={() => setShowLogin(true)}>Login</button>
-      )}
+      <button className="login-btn" onClick={() => setShowLogin(true)}>Login</button>
 
       {/* LOGIN MODAL */}
       {showLogin && (
@@ -138,6 +108,14 @@ const Navbar = () => {
                 </button>
               </div>
               <button type="submit" className="submit-btn">Sign In</button>
+              <div className="modal-links">
+                <p>
+                  Don't have an account?{" "}
+                  <span className="green-link" onClick={() => { setShowLogin(false); setShowSignup(true); }}>
+                    Sign Up
+                  </span>
+                </p>
+              </div>
             </form>
             <button className="close-btn" onClick={() => setShowLogin(false)}>×</button>
           </div>
@@ -185,8 +163,23 @@ const Navbar = () => {
                   value={signupData.password}
                   onChange={(e) => setSignupData({ ...signupData, password: e.target.value })}
                 />
+                <button type="button" className="toggle-password" onClick={() => setPasswordVisible(!passwordVisible)}>
+                  {passwordVisible ? "👁️" : "👁️‍🗨️"}
+                </button>
+              </div>
+              <div className="terms-group">
+                <input type="checkbox" id="terms" required />
+                <label htmlFor="terms">Accept Terms & Conditions</label>
               </div>
               <button type="submit" className="submit-btn">Join Us</button>
+              <div className="modal-links">
+                <p>
+                  Already have an account?{" "}
+                  <span className="green-link" onClick={() => { setShowSignup(false); setShowLogin(true); }}>
+                    Login
+                  </span>
+                </p>
+              </div>
             </form>
             <button className="close-btn" onClick={() => setShowSignup(false)}>×</button>
           </div>
