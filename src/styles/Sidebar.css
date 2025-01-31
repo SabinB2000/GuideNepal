@@ -1,0 +1,89 @@
+.sidebar {
+    width: 60px; /* Minimized by default */
+    height: 100vh;
+    position: fixed;
+    top: 0;
+    left: 0;
+    background: rgba(0, 0, 0, 0.8); /* Blurred background */
+    backdrop-filter: blur(5px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 20px;
+    transition: width 0.3s ease-in-out;
+    z-index: 1000;
+}
+
+.sidebar:hover {
+    width: 200px; /* Expand on hover */
+}
+
+.sidebar h2 {
+    font-size: 18px;
+    color: white;
+    margin-bottom: 20px;
+    font-weight: bold;
+    text-align: center;
+    transition: opacity 0.3s ease-in-out;
+}
+
+.sidebar:hover h2 {
+    opacity: 1;
+}
+
+.sidebar ul {
+    list-style: none;
+    padding: 0;
+    width: 100%;
+}
+
+.sidebar ul li {
+    width: 100%;
+    padding: 10px 0;
+    text-align: center;
+    transition: background 0.3s ease-in-out;
+}
+
+.sidebar ul li a {
+    text-decoration: none;
+    color: white;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    transition: all 0.3s ease-in-out;
+    border-radius: 5px;
+}
+
+.sidebar ul li a:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.sidebar ul li a.active {
+    background-color: rgba(0, 255, 127, 0.6); /* Highlight active page */
+    color: #000;
+    font-weight: bold;
+}
+
+.sidebar ul li a i {
+    margin-right: 10px;
+}
+
+/* Logout Button */
+.logout-btn {
+    margin-top: auto;
+    width: 90%;
+    padding: 10px;
+    background: #e74c3c;
+    color: white;
+    font-weight: bold;
+    border: none;
+    cursor: pointer;
+    transition: background 0.3s ease-in-out;
+    border-radius: 5px;
+    text-align: center;
+}
+
+.logout-btn:hover {
+    background: #c0392b;
+}

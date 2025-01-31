@@ -1,42 +1,121 @@
-/* ALTERNATIVE FLEX-BASED APPROACH */
+/* Navbar Container */
 .navbar {
     display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 15px 50px;
+    background-color: #fff;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
 }
 
+/* Navigation Links */
 .nav-links {
     display: flex;
     gap: 30px;
     list-style: none;
-    margin: 0 auto; /* Center links */
+    margin: 0 auto;
 }
 
-.login-btn {
+.nav-links a {
+    text-decoration: none;
+    color: #333;
+    font-weight: bold;
+}
+
+.nav-links a:hover {
+    color: #4CAF50;
+}
+
+/* Login & Logout Buttons */
+.login-btn,
+.logout-btn {
     background-color: #4CAF50;
     color: white;
     padding: 10px 25px;
     border-radius: 20px;
     border: none;
     cursor: pointer;
+    transition: background 0.3s ease-in-out;
 }
 
-/* MODAL STYLES */
+.login-btn:hover,
+.logout-btn:hover {
+    background-color: #388E3C;
+}
+
+/* Profile Dropdown */
+.user-menu {
+    position: relative;
+    display: inline-block;
+}
+
+.profile-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px;
+    border-radius: 20px;
+    cursor: pointer;
+    border: none;
+    font-size: 16px;
+}
+
+.profile-btn:hover {
+    background-color: #388E3C;
+}
+
+/* Dropdown Menu */
+.dropdown {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 40px;
+    background-color: white;
+    min-width: 150px;
+    box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 5px;
+    z-index: 1000;
+}
+
+.user-menu:hover .dropdown {
+    display: block;
+}
+
+/* Dropdown Links */
+.dropdown a,
+.dropdown button {
+    display: block;
+    width: 100%;
+    padding: 10px;
+    text-align: left;
+    border: none;
+    background: none;
+    color: #333;
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: none;
+}
+
+.dropdown a:hover,
+.dropdown button:hover {
+    background-color: #f5f5f5;
+}
+
+/* Modal Overlay for Login & Signup */
 .modal-overlay {
     position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;
-    height: 100vh;
+    right: 0;
+    bottom: 0;
     background: rgba(0, 0, 0, 0.5);
-    backdrop-filter: blur(8px);
     display: flex;
     justify-content: center;
     align-items: center;
     z-index: 1001;
+    backdrop-filter: blur(8px);
 }
 
+/* Modal Box */
 .modal-content {
     background: white;
     padding: 30px;
@@ -44,6 +123,7 @@
     width: 400px;
     position: relative;
     color: #333;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 .modal-content h2 {
@@ -51,6 +131,7 @@
     text-align: center;
 }
 
+/* Input Fields */
 .input-group {
     margin-bottom: 15px;
 }
@@ -67,6 +148,7 @@
     border-radius: 4px;
 }
 
+/* Password Toggle */
 .password-group {
     position: relative;
 }
@@ -81,6 +163,7 @@
     cursor: pointer;
 }
 
+/* Submit Buttons */
 .submit-btn {
     width: 100%;
     padding: 10px;
@@ -92,6 +175,11 @@
     margin-top: 15px;
 }
 
+.submit-btn:hover {
+    background-color: #388E3C;
+}
+
+/* Modal Links */
 .modal-links {
     margin-top: 15px;
     text-align: center;
@@ -110,6 +198,7 @@
     font-weight: bold;
 }
 
+/* Terms & Conditions Checkbox */
 .terms-group {
     display: flex;
     align-items: center;
@@ -120,6 +209,7 @@
     margin-right: 10px;
 }
 
+/* Close Button */
 .close-btn {
     position: absolute;
     top: 10px;
@@ -129,9 +219,4 @@
     font-size: 24px;
     cursor: pointer;
     color: #666;
-}
-
-/* Blur effect when modal is open */
-body.modal-open {
-    overflow: hidden;
 }
