@@ -7,7 +7,7 @@ import About from "./pages/About";
 import Vendors from "./pages/Vendors";
 import Reviews from "./pages/Reviews";
 import Map from "./pages/Map";
-import Translate from "./pages/Translate";
+import Translation from "./pages/Translation";
 import Itineraries from "./pages/Itineraries";
 import Dashboard from "./pages/Dashboard";
 import Profile from "./pages/Profile";
@@ -33,7 +33,7 @@ function App() {
         <Route path="/about" element={<About />} />
         <Route path="/vendors" element={<Vendors />} />
         <Route path="/map" element={<Map />} />
-        <Route path="/translate" element={<Translate />} />
+        <Route path="/translate" element={<Translation />} />
         <Route path="/reviews" element={<Reviews />} />
         <Route path="/itineraries" element={<Itineraries />} />
         <Route path="/dashboard" element={<Dashboard />} />

@@ -60,7 +60,7 @@
 }
 
 .sidebar ul li a.active {
-    background-color: rgba(0, 255, 127, 0.6); /* Highlight active page */
+    background-color: rgba(4, 50, 27, 0.6); /* Highlight active page */
     color: #000;
     font-weight: bold;
 }
@@ -69,21 +69,22 @@
     margin-right: 10px;
 }
 
-/* Logout Button */
+/* Sidebar Logout Button */
 .logout-btn {
-    margin-top: auto;
-    width: 90%;
-    padding: 10px;
-    background: #e74c3c;
-    color: white;
+    background-color: #d9534f !important; /* Red */
+    color: white !important;
     font-weight: bold;
     border: none;
-    cursor: pointer;
-    transition: background 0.3s ease-in-out;
+    padding: 10px 20px;
     border-radius: 5px;
-    text-align: center;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.3s ease-in-out;
 }
 
 .logout-btn:hover {
-    background: #c0392b;
+    background-color: #c9302c !important; /* Darker Red */
 }
+
