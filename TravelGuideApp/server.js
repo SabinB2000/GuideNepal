@@ -1,7 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const connectDB = require("./config/db");
+const connectDB = require("./config/db"); // Check if this function is working
 const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const translate = require("google-translate-api-x");
@@ -12,20 +12,18 @@ dotenv.config();
 const app = express();
 
 // ✅ Middleware
-app.use(cors({ origin: "*", methods: ["GET", "POST"] })); // Ensure API is accessible
-app.use(express.json());
+app.use(cors({ origin: "*", methods: ["GET", "POST"] })); 
+app.use(express.json()); // ✅ Required to parse JSON requests
 
-// ✅ MongoDB Connection
+// ✅ Ensure MongoDB is connected
 connectDB();
-
-// ✅ Ensure ElevenLabs TTS API is correctly registered
-app.use("/api/elevenlabs-tts", elevenlabsTTSRoute);
 
 // ✅ Register Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/elevenlabs-tts", elevenlabsTTSRoute);
 
-// ✅ Translation Route
+// ✅ Fix: Ensure the /api/translate route exists
 app.post("/api/translate", async (req, res) => {
   const { text, from, to } = req.body;
 
@@ -42,11 +40,11 @@ app.post("/api/translate", async (req, res) => {
   }
 });
 
-// ✅ Default Route for Testing
+// ✅ Default Route (Check if API is running)
 app.get("/", (req, res) => {
   res.send("API is running...");
 });
 
 // ✅ Start Server
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));

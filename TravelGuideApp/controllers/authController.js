@@ -49,11 +49,12 @@ const getProfile = async (req, res) => {
         if (!user) {
             return res.status(404).json({ message: "User not found" });
         }
-        res.status(200).json(user);
+        res.status(200).json({ name: user.firstName + " " + user.lastName });
     } catch (error) {
         res.status(500).json({ message: "Server error", error: error.message });
     }
 };
+
 
 // ✅ Export all functions
 module.exports = { registerUser, loginUser, getProfile };
