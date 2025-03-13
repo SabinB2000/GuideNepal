@@ -1,11 +1,14 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const connectDB = require("./config/db"); // Check if this function is working
+const connectDB = require("./config/db"); // ✅ Ensure this function works
 const authRoutes = require("./routes/authRoutes");
 const profileRoutes = require("./routes/profileRoutes");
 const translate = require("google-translate-api-x");
-const elevenlabsTTSRoute = require("./routes/elevenlabsTTS");
+const searchRoutes = require('./routes/searchRoutes');
+const userRoutes = require("./routes/userRoutes");
+const { protect } = require("./middleware/authMiddleware");
+
 
 dotenv.config();
 
@@ -15,13 +18,27 @@ const app = express();
 app.use(cors({ origin: "*", methods: ["GET", "POST"] })); 
 app.use(express.json()); // ✅ Required to parse JSON requests
 
-// ✅ Ensure MongoDB is connected
-connectDB();
+
+app.use(cors({
+  origin: ["http://localhost:5000"],
+  credentials: true
+}));
+
+
+// ✅ Connect to MongoDB (Remove Duplicate Call)
+connectDB().catch((err) => {
+  console.error("❌ MongoDB Connection Failed:", err);
+});
 
 // ✅ Register Routes
-app.use("/api/auth", authRoutes);
-app.use("/api/profile", profileRoutes);
-app.use("/api/elevenlabs-tts", elevenlabsTTSRoute);
+console.log("✅ Auth routes loaded!");
+app.use("/api/auth", authRoutes); // ✅ Use `/api/auth` prefix
+app.use("/api/profile", protect, profileRoutes); // ✅ Protect routes
+app.use("/api/searches", searchRoutes);
+app.use("/api/auth", userRoutes); 
+
+
+
 
 // ✅ Fix: Ensure the /api/translate route exists
 app.post("/api/translate", async (req, res) => {
