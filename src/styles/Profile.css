@@ -1,38 +1,94 @@
+/* Profile Page Layout */
 .profile-page {
-    max-width: 500px;
-    margin: 50px auto;
-    padding: 20px;
-    background: #fff;
-    border-radius: 10px;
-    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.2);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  padding-left: 120px; /* ✅ Adjust to match sidebar width */
+}
+
+/* Profile Card */
+.profile-card {
+  background: rgba(255, 255, 255, 0.15); /* Glassmorphism effect */
+  border-radius: 15px;
+  padding: 20px;
+  width: 350px;
+  text-align: center;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.3s ease-in-out;
+}
+
+.profile-card:hover {
+  transform: scale(1.02);
+}
+
+.profile-card h2 {
+  font-size: 22px;
+  color: #fff;
+  margin-bottom: 10px;
+}
+
+.profile-card p {
+  font-size: 16px;
+  color: #ddd;
+  margin: 5px 0;
+}
+
+.profile-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 10px;
+  border: 2px solid #fff;
+}
+/* Edit Form */
+.edit-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.edit-form input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+}
+
+/* Buttons */
+.edit-button, .save-button, .cancel-button {
+  margin-top: 10px;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.edit-button {
+  background-color: #007bff;
+  color: white;
+}
+
+.save-button {
+  background-color: #28a745;
+  color: white;
+}
+
+.cancel-button {
+  background-color: #dc3545;
+  color: white;
+}
+
+/* Responsive Fix for Smaller Screens */
+@media screen and (max-width: 768px) {
+  .profile-page {
+    padding-left: 80px; /* Adjust for smaller screens */
   }
-  
-  .profile-page h2 {
-    text-align: center;
+
+  .profile-card {
+    width: 90%;
   }
-  
-  .profile-page label {
-    display: block;
-    margin-top: 10px;
-  }
-  
-  .profile-page input {
-    width: 100%;
-    padding: 8px;
-    margin-top: 5px;
-  }
-  
-  .profile-page button {
-    width: 100%;
-    padding: 10px;
-    background: #28a745;
-    color: white;
-    border: none;
-    margin-top: 15px;
-    cursor: pointer;
-  }
-  
-  .profile-page button:hover {
-    background: #218838;
-  }
-  
+}

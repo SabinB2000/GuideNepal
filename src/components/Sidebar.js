@@ -3,15 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import "../styles/Sidebar.css";
 
 const Sidebar = ({ handleLogout }) => {
-  const [isCollapsed, setIsCollapsed] = useState(true);
+  const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
-
-  // Fix Logout Function Here
-  const logout = () => {
-    localStorage.removeItem("token"); // ✅ Remove user session
-    navigate("/"); // ✅ Redirect to login
-    window.location.reload(); // ✅ Force page refresh to remove sidebar
-  };
 
   return (
     <div
@@ -21,15 +14,53 @@ const Sidebar = ({ handleLogout }) => {
     >
       <h2 className={isCollapsed ? "hidden" : ""}>Guide Nepal</h2>
       <ul>
-        <li><Link to="/dashboard" title="Dashboard">📊 {!isCollapsed && "Dashboard"}</Link></li>
-        <li><Link to="/itineraries" title="My Itineraries">📅 {!isCollapsed && "My Itineraries"}</Link></li>
-        <li><Link to="/vendors" title="Vendors & Events">🛍️ {!isCollapsed && "Vendors & Events"}</Link></li>
-        <li><Link to="/map" title="Map & Navigation">🗺️ {!isCollapsed && "Map & Navigation"}</Link></li>
-        <li><Link to="/translate" title="Translation Tool">🌎 {!isCollapsed && "Translation Tool"}</Link></li>
-        <li><Link to="/reviews" title="Reviews">⭐ {!isCollapsed && "Reviews"}</Link></li>
-        <li><Link to="/profile" title="Profile">👤 {!isCollapsed && "Profile"}</Link></li>
         <li>
-          <button className="logout-btn" onClick={logout}>🚪 {!isCollapsed && "Logout"}</button>
+          <Link to="/dashboard" className="menu-item">
+            <span className="icon">🏠</span>
+            {!isCollapsed && <span className="text">Dashboard</span>}
+          </Link>
+        </li>
+        <li>
+          <Link to="/itineraries" className="menu-item">
+            <span className="icon">📅</span>
+            {!isCollapsed && <span className="text">My Itineraries</span>}
+          </Link>
+        </li>
+        <li>
+          <Link to="/vendors" className="menu-item">
+            <span className="icon">🛍️</span>
+            {!isCollapsed && <span className="text">Vendors & Events</span>}
+          </Link>
+        </li>
+        <li>
+          <Link to="/map" className="menu-item">
+            <span className="icon">🗺️</span>
+            {!isCollapsed && <span className="text">Map & Navigation</span>}
+          </Link>
+        </li>
+        <li>
+          <Link to="/translate" className="menu-item">
+            <span className="icon">🌎</span>
+            {!isCollapsed && <span className="text">Translation Tool</span>}
+          </Link>
+        </li>
+        <li>
+          <Link to="/reviews" className="menu-item">
+            <span className="icon">⭐</span>
+            {!isCollapsed && <span className="text">Reviews</span>}
+          </Link>
+        </li>
+        <li>
+          <Link to="/profile" className="menu-item">
+            <span className="icon">👤</span>
+            {!isCollapsed && <span className="text">Profile</span>}
+          </Link>
+        </li>
+        <li>
+          <button className="logout-btn" onClick={handleLogout}>
+            <span className="icon">🚪</span>
+            {!isCollapsed && <span className="text">Logout</span>}
+          </button>
         </li>
       </ul>
     </div>
