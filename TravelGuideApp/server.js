@@ -3,7 +3,7 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db"); // ✅ Ensure this function works
 const authRoutes = require("./routes/authRoutes");
-const profileRoutes = require("./routes/profileRoutes");
+const profileRoutes = require("./routes/profileRoutes"); // ✅ Ensure this is imported
 const translate = require("google-translate-api-x"); // ✅ Import translation package
 const searchRoutes = require('./routes/searchRoutes');
 const userRoutes = require("./routes/userRoutes");
@@ -33,6 +33,8 @@ connectDB().catch((err) => {
 // ✅ Register Routes
 console.log("✅ Auth routes loaded!");
 app.use("/api/auth", authRoutes); // ✅ Use `/api/auth` prefix
+app.use("/api/profile", profileRoutes); // ✅ Ensure it's registered correctly
+
 app.use("/api/profile", protect, profileRoutes); // ✅ Protect routes
 app.use("/api/searches", searchRoutes);
 app.use("/api/auth", userRoutes); 
