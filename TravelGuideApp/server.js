@@ -3,10 +3,12 @@ const cors = require("cors");
 const dotenv = require("dotenv");
 const connectDB = require("./config/db"); // ✅ Ensure this function works
 const authRoutes = require("./routes/authRoutes");
-const profileRoutes = require("./routes/profileRoutes"); // ✅ Ensure this is imported
+const profileRoutes = require("./routes/profileRoutes"); 
 const translate = require("google-translate-api-x"); // ✅ Import translation package
 const searchRoutes = require('./routes/searchRoutes');
 const userRoutes = require("./routes/userRoutes");
+const placesRoutes = require("./routes/placesRoutes"); // ✅ Add places route
+const savedPlacesRoutes = require("./routes/savedPlacesRoutes"); // ✅ Import saved places route
 const { protect } = require("./middleware/authMiddleware");
 
 
@@ -15,8 +17,8 @@ dotenv.config();
 const app = express();
 
 // ✅ Middleware
-app.use(cors({ origin: "*", methods: ["GET", "POST"] })); 
-app.use(express.json()); // ✅ Required to parse JSON requests
+app.use(cors({ origin: "http://localhost:3000", credentials: true })); // ✅ Ensure CORS is correct
+  app.use(express.json()); // ✅ Required to parse JSON requests
 
 
 app.use(cors({
@@ -33,11 +35,14 @@ connectDB().catch((err) => {
 // ✅ Register Routes
 console.log("✅ Auth routes loaded!");
 app.use("/api/auth", authRoutes); // ✅ Use `/api/auth` prefix
-app.use("/api/profile", profileRoutes); // ✅ Ensure it's registered correctly
-
+app.use("/api/profile", profileRoutes); 
 app.use("/api/profile", protect, profileRoutes); // ✅ Protect routes
 app.use("/api/searches", searchRoutes);
 app.use("/api/auth", userRoutes); 
+app.use("/api/places", placesRoutes);  // ✅ Fix: Ensure Places Route Exists
+app.use("/api/saved-places", savedPlacesRoutes); // ✅ Add saved places route
+
+
 
 
 
@@ -65,5 +70,5 @@ app.get("/", (req, res) => {
 });
 
 // ✅ Start Server
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));

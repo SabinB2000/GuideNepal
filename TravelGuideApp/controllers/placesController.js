@@ -23,4 +23,4 @@ const addPlace = async (req, res) => {
   }
 };
 
-module.exports = { getRecommendedPlaces, addPlace };
+module.exports = { getRecommendedPlaces, addPlace, updateProfile, changePassword, upload };
