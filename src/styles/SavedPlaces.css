@@ -1,0 +1,48 @@
+/* ✅ SavedPlaces.css */
+.saved-places {
+    margin-top: 20px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.7);
+    border-radius: 10px;
+    width: 80%;
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
+    color: #fff;
+    text-align: center;
+  }
+  
+  .saved-places h3 {
+    font-size: 18px;
+    font-weight: bold;
+    margin-bottom: 10px;
+    color: #ffcc00;
+  }
+  
+  .saved-places ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .saved-places li {
+    padding: 8px 12px;
+    border-radius: 5px;
+    background: rgba(255, 255, 255, 0.2);
+    margin-bottom: 8px;
+    transition: all 0.3s ease-in-out;
+  }
+  
+  .saved-places li:hover {
+    background: rgba(255, 255, 255, 0.4);
+  }
+  
+  @media screen and (max-width: 768px) {
+    .saved-places {
+      width: 90%;
+      padding: 10px;
+    }
+  }
+  

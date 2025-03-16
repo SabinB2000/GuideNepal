@@ -9,6 +9,7 @@ import Reviews from "./pages/Reviews";
 import Map from "./pages/Map";
 import Dashboard from "./pages/Dashboard";
 import Translation from "./pages/Translation"; // ✅ Import the Translation Page
+import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import { ThemeProvider } from "./context/ThemeContext";
 import axiosInstance from "./utils/axiosConfig"; // ✅ Ensure API requests include token
@@ -52,6 +53,7 @@ function App() {
           <Route path="/map" element={<Map />} />
           <Route path="/reviews" element={<Reviews />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/login" element={<Login />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/translate" element={<Translation />} /> {/* ✅ Ensure this is present */}
         </Routes>

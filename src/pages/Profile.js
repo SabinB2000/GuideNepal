@@ -6,10 +6,16 @@ const Profile = () => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
+  const [changingPassword, setChangingPassword] = useState(false);
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
+    profilePicture: null,
+  });
+  const [passwordData, setPasswordData] = useState({
+    oldPassword: "",
+    newPassword: "",
   });
 
   useEffect(() => {
@@ -22,14 +28,10 @@ const Profile = () => {
           return;
         }
 
-        console.log("Stored Token:", token);
-
         const response = await axios.get(
-          `${process.env.REACT_APP_API_URL}/api/profile/me`, // ✅ Fixed API Route
+          `${process.env.REACT_APP_API_URL}/api/profile/me`, // ✅ Ensure correct API path
           { headers: { Authorization: `Bearer ${token}` } }
         );
-
-        console.log("Profile API Response:", response.data);
 
         setUser(response.data);
         setFormData({
@@ -38,7 +40,7 @@ const Profile = () => {
           email: response.data.email || "",
         });
       } catch (error) {
-        console.error("Error fetching profile:", error.response?.data || error.message);
+        console.error("Error fetching profile:", error);
       } finally {
         setLoading(false);
       }
@@ -48,33 +50,59 @@ const Profile = () => {
   }, []);
 
   const handleEditToggle = () => setEditing(!editing);
+  const handlePasswordToggle = () => setChangingPassword(!changingPassword);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e) => {
+    setFormData({ ...formData, profilePicture: e.target.files[0] });
+  };
+
+  const handlePasswordChange = (e) => {
+    setPasswordData({ ...passwordData, [e.target.name]: e.target.value });
+  };
+
   const handleSave = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) {
-        alert("Unauthorized! Please log in again.");
-        return;
+      const formDataToSend = new FormData();
+      formDataToSend.append("firstName", formData.firstName);
+      formDataToSend.append("lastName", formData.lastName);
+      formDataToSend.append("email", formData.email);
+      if (formData.profilePicture) {
+        formDataToSend.append("profilePicture", formData.profilePicture);
       }
 
       const response = await axios.put(
-        `${process.env.REACT_APP_API_URL}/auth/profile/update`, // ✅ FIXED API ROUTE
-        formData,
+        `${process.env.REACT_APP_API_URL}/api/profile/update`, // ✅ Ensure correct API
+        formDataToSend,
         { headers: { Authorization: `Bearer ${token}` } }
       );
-
-      console.log("Profile Updated Successfully:", response.data);
 
       setUser(response.data);
       setEditing(false);
       alert("Profile updated successfully!");
     } catch (error) {
-      console.error("Error updating profile:", error.response?.data || error.message);
+      console.error("Error updating profile:", error);
       alert("Failed to update profile.");
+    }
+  };
+
+  const handlePasswordSave = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      await axios.put(
+        `${process.env.REACT_APP_API_URL}/api/profile/change-password`, // ✅ Ensure correct API
+        passwordData,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      alert("Password updated successfully!");
+      setChangingPassword(false);
+    } catch (error) {
+      console.error("Error changing password:", error);
+      alert("Failed to change password.");
     }
   };
 
@@ -85,7 +113,10 @@ const Profile = () => {
       ) : user ? (
         <div className="profile-card">
           <h2>👤 User Profile</h2>
-          <img src="/assets/profile.png" alt="Profile" />
+          <img
+            src={user.profilePicture || "/assets/profile.png"}
+            alt="Profile"
+          />
 
           {editing ? (
             <>
@@ -94,36 +125,42 @@ const Profile = () => {
                 name="firstName"
                 value={formData.firstName}
                 onChange={handleChange}
-                className="edit-input"
               />
               <input
-                type="text"
-                name="lastName"
-                value={formData.lastName}
-                onChange={handleChange}
-                className="edit-input"
+                type="file"
+                name="profilePicture"
+                onChange={handleFileChange}
               />
-              <input
-                type="email"
-                name="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="edit-input"
-              />
-              <button onClick={handleSave} className="save-btn">💾 Save</button>
+              <button onClick={handleSave}>💾 Save</button>
             </>
           ) : (
             <>
-              <p><span className="profile-info">First Name:</span> {user.firstName}</p>
-              <p><span className="profile-info">Last Name:</span> {user.lastName}</p>
-              <p><span className="profile-info">Email:</span> {user.email}</p>
-              <p><span className="profile-info">Joined On:</span> {new Date(user.createdAt).toLocaleDateString()}</p>
-              <button onClick={handleEditToggle} className="edit-btn">✏️ Edit Profile</button>
+              <p>First Name: {user.firstName}</p>
+              <button onClick={handleEditToggle}>✏️ Edit Profile</button>
+              <button onClick={handlePasswordToggle}>🔒 Change Password</button>
+            </>
+          )}
+
+          {changingPassword && (
+            <>
+              <input
+                type="password"
+                name="oldPassword"
+                placeholder="Old Password"
+                onChange={handlePasswordChange}
+              />
+              <input
+                type="password"
+                name="newPassword"
+                placeholder="New Password"
+                onChange={handlePasswordChange}
+              />
+              <button onClick={handlePasswordSave}>🔑 Save Password</button>
             </>
           )}
         </div>
       ) : (
-        <p className="error-message">⚠ No profile found. Please check your account.</p>
+        <p>No profile found.</p>
       )}
     </div>
   );
