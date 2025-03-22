@@ -9,7 +9,10 @@ const searchRoutes = require('./routes/searchRoutes');
 const userRoutes = require("./routes/userRoutes");
 const placesRoutes = require("./routes/placesRoutes"); // ✅ Add places route
 const savedPlacesRoutes = require("./routes/savedPlacesRoutes"); // ✅ Import saved places route
+const itineraryRoutes = require("./routes/itinerariesRoutes"); // ✅ Correctly Import
+const eventRoutes = require("./routes/eventsRoutes");
 const { protect } = require("./middleware/authMiddleware");
+
 
 
 dotenv.config();
@@ -41,7 +44,8 @@ app.use("/api/searches", searchRoutes);
 app.use("/api/auth", userRoutes); 
 app.use("/api/places", placesRoutes);  // ✅ Fix: Ensure Places Route Exists
 app.use("/api/saved-places", savedPlacesRoutes); // ✅ Add saved places route
-
+app.use("/api/itineraries", itineraryRoutes); // ✅ Ensure this line is present
+app.use("/api/events", eventRoutes);
 
 
 
