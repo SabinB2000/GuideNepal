@@ -7,7 +7,7 @@ const PlaceSchema = new mongoose.Schema({
     lng: { type: Number, required: true },
   },
   description: { type: String },
-  category: { type: String, enum: ["natural", "historical", "cultural", "entertainment"], required: true },
+  category: { type: String, enum: ["natural", "historical", "cultural", "entertainment","temple","nature","wildlife","scenic","adventure","religious"], required: true },
   imageUrl: { type: String },
   mainAttraction: { type: Boolean, default: false }, // ✅ Mark main attractions
 });
