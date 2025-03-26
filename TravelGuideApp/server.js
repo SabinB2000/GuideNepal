@@ -46,7 +46,9 @@ app.use("/api/places", placesRoutes);  // ✅ Fix: Ensure Places Route Exists
 app.use("/api/saved-places", savedPlacesRoutes); // ✅ Add saved places route
 app.use("/api/itineraries", itineraryRoutes); // ✅ Ensure this line is present
 app.use("/api/events", eventRoutes);
+app.use('/api/admin', require('./routes/adminRoutes'));
 
+  
 
 
 
