@@ -1,11 +1,10 @@
-const express = require('express');
+const express = require("express");
+const { authenticate, isAdmin } = require("../middleware/authMiddleware"); // ✅ Fix this
+const { getAdminStats } = require("../controllers/adminController");
+
 const router = express.Router();
 
-const { getAdminStats } = require('../controllers/adminController');
-const authenticate = require('../middleware/authenticate');
-const isAdmin = require('../middleware/isAdmin');
-
-// ✅ Route: GET /api/admin/stats
-router.get('/stats', authenticate, isAdmin, getAdminStats);
+// ✅ Admin stats route (protected)
+router.get("/stats", authenticate, isAdmin, getAdminStats);
 
 module.exports = router;

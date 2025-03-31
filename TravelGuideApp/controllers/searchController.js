@@ -1,10 +1,7 @@
-// backend/controllers/searchController.js
 const Search = require('../models/Search');
 
-// @desc    Get recent searches
-// @route   GET /api/searches
-// @access  Private
-exports.getSearches = async (req, res) => {
+// ✅ GET recent searches
+const getSearches = async (req, res) => {
   try {
     const searches = await Search.find({ user: req.user.id })
       .sort({ createdAt: -1 })
@@ -25,10 +22,8 @@ exports.getSearches = async (req, res) => {
   }
 };
 
-// @desc    Create new search
-// @route   POST /api/searches
-// @access  Private
-exports.createSearch = async (req, res) => {
+// ✅ POST a new search
+const createSearch = async (req, res) => {
   try {
     const newSearch = await Search.create({
       user: req.user.id,
@@ -47,3 +42,5 @@ exports.createSearch = async (req, res) => {
     });
   }
 };
+
+module.exports = { getSearches, createSearch };

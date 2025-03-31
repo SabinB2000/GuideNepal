@@ -1,59 +1,54 @@
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const connectDB = require("./config/db"); // ✅ Ensure this function works
+const connectDB = require("./config/db");
+const translate = require("google-translate-api-x");
+
 const authRoutes = require("./routes/authRoutes");
-const profileRoutes = require("./routes/profileRoutes"); 
-const translate = require("google-translate-api-x"); // ✅ Import translation package
-const searchRoutes = require('./routes/searchRoutes');
+const profileRoutes = require("./routes/profileRoutes");
+const searchRoutes = require("./routes/searchRoutes");
 const userRoutes = require("./routes/userRoutes");
-const placesRoutes = require("./routes/placesRoutes"); // ✅ Add places route
-const savedPlacesRoutes = require("./routes/savedPlacesRoutes"); // ✅ Import saved places route
-const itineraryRoutes = require("./routes/itinerariesRoutes"); // ✅ Correctly Import
+const placesRoutes = require("./routes/placesRoutes");
+const savedPlacesRoutes = require("./routes/savedPlacesRoutes");
+const itineraryRoutes = require("./routes/itinerariesRoutes");
 const eventRoutes = require("./routes/eventsRoutes");
-const { protect } = require("./middleware/authMiddleware");
-
-
+const adminRoutes = require("./routes/adminRoutes");
+const adminUserRoutes = require("./routes/adminUserRoutes");
+const adminEventRoutes = require("./routes/adminEventRoutes");
+const adminPlaceRoutes = require("./routes/adminPlaceRoutes");
 
 dotenv.config();
-
 const app = express();
 
-// ✅ Middleware
-app.use(cors({ origin: "http://localhost:3000", credentials: true })); // ✅ Ensure CORS is correct
-  app.use(express.json()); // ✅ Required to parse JSON requests
-
-
-app.use(cors({
-  origin: ["http://localhost:5000"],
-  credentials: true
-}));
-
-
-// ✅ Connect to MongoDB (Remove Duplicate Call)
+// ✅ MongoDB Connection
 connectDB().catch((err) => {
   console.error("❌ MongoDB Connection Failed:", err);
 });
 
-// ✅ Register Routes
-console.log("✅ Auth routes loaded!");
-app.use("/api/auth", authRoutes); // ✅ Use `/api/auth` prefix
-app.use("/api/profile", profileRoutes); 
-app.use("/api/profile", protect, profileRoutes); // ✅ Protect routes
+// ✅ Middlewares
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(express.json());
+
+// ✅ Route Handlers
+app.use("/api/auth", authRoutes);
+app.use("/api/profile", profileRoutes);
 app.use("/api/searches", searchRoutes);
-app.use("/api/auth", userRoutes); 
-app.use("/api/places", placesRoutes);  // ✅ Fix: Ensure Places Route Exists
-app.use("/api/saved-places", savedPlacesRoutes); // ✅ Add saved places route
-app.use("/api/itineraries", itineraryRoutes); // ✅ Ensure this line is present
+app.use("/api/users", userRoutes);
+app.use("/api/places", placesRoutes);
+app.use("/api/saved-places", savedPlacesRoutes);
+app.use("/api/itineraries", itineraryRoutes);
 app.use("/api/events", eventRoutes);
-app.use('/api/admin', require('./routes/adminRoutes'));
+app.use("/api/admin/stats", adminRoutes);
+app.use("/api/admin/users", adminUserRoutes);
+app.use("/api/admin/places", adminPlaceRoutes);
+app.use('/api/admin/itineraries', require('./routes/adminItineraryRoutes'));
+app.use("/api/admin/events", require("./routes/adminEventRoutes"));
 
-  
 
 
 
 
-// ✅ Fix: Ensure the /api/translate route exists
+// ✅ Translation Endpoint
 app.post("/api/translate", async (req, res) => {
   const { text, from, to } = req.body;
 
@@ -70,11 +65,13 @@ app.post("/api/translate", async (req, res) => {
   }
 });
 
-// ✅ Default Route (Check if API is running)
+// ✅ Health Check
 app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.send("🌍 Guide Nepal API is running...");
 });
 
 // ✅ Start Server
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+});

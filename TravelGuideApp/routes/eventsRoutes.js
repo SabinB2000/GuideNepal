@@ -1,8 +1,13 @@
 const express = require("express");
 const router = express.Router();
-const { getEvents } = require("../controllers/eventController");
+const { getEvents, createEvent, deleteEvent } = require("../controllers/eventController");
+const { authenticate, isAdmin } = require("../middleware/authMiddleware");
 
-// ✅ Fetch Events (No Auth Required)
+// ✅ Public route (for users)
 router.get("/", getEvents);
+
+// ✅ Admin routes
+router.post("/", authenticate, isAdmin, createEvent);
+router.delete("/:id", authenticate, isAdmin, deleteEvent);
 
 module.exports = router;

@@ -1,18 +1,17 @@
 const express = require("express");
-const router = express.Router();
+const { authenticate, isAdmin } = require("../middleware/authMiddleware");
 const {
   getAllItineraries,
   createItinerary,
   deleteItinerary,
-  updateItinerary,
+  updateItinerary
 } = require("../controllers/itineraryController");
-const { authenticate, isAdmin } = require("../middleware/authMiddleware");
+
+const router = express.Router();
 
 router.get("/", authenticate, isAdmin, getAllItineraries);
 router.post("/", authenticate, isAdmin, createItinerary);
-router.put("/:id", authenticate, isAdmin, updateItinerary);
 router.delete("/:id", authenticate, isAdmin, deleteItinerary);
-router.get("/", getAllItineraries); // Public view for users
-
+router.put("/:id", authenticate, isAdmin, updateItinerary);
 
 module.exports = router;

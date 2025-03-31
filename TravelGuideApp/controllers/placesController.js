@@ -1,21 +1,48 @@
 const Place = require("../models/Place");
 
-// ✅ Get Recommended Places
+// ✅ Get Recommended Places (For home/explore)
 const getRecommendedPlaces = async (req, res) => {
   try {
-    const places = await Place.find().limit(10); // Fetch top 10 places
+    const places = await Place.find().limit(10);
     res.status(200).json(places);
   } catch (error) {
     res.status(500).json({ message: "Error fetching places", error: error.message });
   }
 };
 
-// ✅ Add a New Place (For testing or admin panel)
-const addPlace = async (req, res) => {
-  const { name, category, image } = req.body;
-
+// ✅ Get Unique Places (For Explore Page)
+const getUniquePlaces = async (req, res) => {
   try {
-    const newPlace = new Place({ name, category, image });
+    const uniquePlaces = await Place.find().limit(20); // You can filter with tags later
+    res.status(200).json(uniquePlaces);
+  } catch (error) {
+    res.status(500).json({ message: "Error fetching unique places", error: error.message });
+  }
+};
+
+// ✅ Admin: Get All Places
+const getAllPlaces = async (req, res) => {
+  try {
+    const places = await Place.find();
+    res.status(200).json(places);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching places", error: err.message });
+  }
+};
+
+// ✅ Admin: Add New Place
+const addPlace = async (req, res) => {
+  try {
+    const { title, description, location, image } = req.body;
+
+    const newPlace = new Place({
+      title,
+      description,
+      location: location || "Kathmandu",
+      image,
+      addedBy: req.user.id,
+    });
+
     await newPlace.save();
     res.status(201).json(newPlace);
   } catch (error) {
@@ -23,19 +50,20 @@ const addPlace = async (req, res) => {
   }
 };
 
-// ✅ Get Unique Places (Main Attractions)
-const getUniquePlaces = async (req, res) => {
+// ✅ Admin: Delete Place
+const deletePlace = async (req, res) => {
   try {
-    const places = await Place.find({ mainAttraction: true });
-    res.status(200).json(places);
-  } catch (error) {
-    console.error("Get Unique Places Error:", error);
-    res.status(500).json({ message: "Server error", error: error.message });
+    await Place.findByIdAndDelete(req.params.id);
+    res.json({ message: "Place deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Delete failed", error: err.message });
   }
 };
 
 module.exports = {
   getRecommendedPlaces,
+  getUniquePlaces,       // ✅ Now defined properly
+  getAllPlaces,
   addPlace,
-  getUniquePlaces,
+  deletePlace,
 };
