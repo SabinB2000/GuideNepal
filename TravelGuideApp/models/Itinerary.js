@@ -1,18 +1,14 @@
-const mongoose = require('mongoose');
+// models/Itinerary.js
+const mongoose = require("mongoose");
 
-const itinerarySchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  places: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Place"
-  }],
-  days: Number,
-  createdBy: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "User", // admin/user
-    required: true
-  },
-  isPublic: { type: Boolean, default: false } // ✅ for user modification feature
-}, { timestamps: true });
+const ItinerarySchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: { type: String }, 
+  // A large text field for your day-by-day schedule
+  detailedSchedule: { type: String }, 
+  // Optional: link to places in your DB
+  places: [{ type: mongoose.Schema.Types.ObjectId, ref: "Place" }],
+  createdAt: { type: Date, default: Date.now },
+});
 
-module.exports = mongoose.model("Itinerary", itinerarySchema);
+module.exports = mongoose.model("Itinerary", ItinerarySchema);

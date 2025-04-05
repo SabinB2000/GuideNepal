@@ -1,14 +1,23 @@
 const express = require("express");
-const router = express.Router(); // ✅ Define router properly
-const Place = require("../models/Place"); // Import your Place model
+const router = express.Router();
+const placeController = require('../controllers/placeController');
 
-const { getUniquePlaces } = require("../controllers/placesController");
+const { authenticate, isAdmin } = require("../middleware/authMiddleware");
+const {
+  getRecommendedPlaces,
+  getUniquePlaces,
+  getAllPlaces,
+  addPlace,
+  deletePlace
+} = require("../controllers/placeController");
 
-
-// ✅ Fetch place suggestions based on category
+// ✅ Public routes
+router.get("/recommended", getRecommendedPlaces);
+router.get("/unique", getUniquePlaces);
 router.get("/suggestions/:category", async (req, res) => {
   try {
     const category = req.params.category;
+    const Place = require("../models/Place");
     const places = await Place.find({ category });
     res.status(200).json(places);
   } catch (error) {
@@ -16,7 +25,9 @@ router.get("/suggestions/:category", async (req, res) => {
   }
 });
 
-router.get("/unique", getUniquePlaces);
+// ✅ Admin routes
+router.get("/admin", authenticate, isAdmin, getAllPlaces);
+router.post("/admin", authenticate, isAdmin, addPlace);
+router.delete("/admin/:id", authenticate, isAdmin, deletePlace);
 
-
-module.exports = router; // ✅ Export the router
+module.exports = router;

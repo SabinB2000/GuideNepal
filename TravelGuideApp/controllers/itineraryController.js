@@ -1,60 +1,54 @@
+// controllers/itineraryController.js
 const Itinerary = require("../models/Itinerary");
 
-// ✅ Admin: Get all itineraries
-const getAllItineraries = async (req, res) => {
+// GET /api/itineraries/admin and GET /api/itineraries/ (public)
+exports.getItineraries = async (req, res) => {
   try {
-    const itineraries = await Itinerary.find().populate("createdBy", "email role");
-    res.json(itineraries);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to fetch itineraries", error: err.message });
+    const itineraries = await Itinerary.find().populate("places");
+    res.status(200).json(itineraries);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-// ✅ Admin: Create itinerary
-const createItinerary = async (req, res) => {
+// POST /api/itineraries/admin
+exports.addItinerary = async (req, res) => {
   try {
-    const { title, days, places } = req.body;
-    const itinerary = new Itinerary({
-      title,
-      days,
-      places,
-      createdBy: req.user.id,
-    });
-    await itinerary.save();
-    res.status(201).json(itinerary);
-  } catch (err) {
-    res.status(500).json({ message: "Failed to create itinerary", error: err.message });
+    const { title, description, places } = req.body;
+    const newItinerary = new Itinerary({ title, description, places });
+    await newItinerary.save();
+    res.status(201).json(newItinerary);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-// ✅ Admin: Delete itinerary
-const deleteItinerary = async (req, res) => {
+// PUT /api/itineraries/admin/:id
+exports.editItinerary = async (req, res) => {
   try {
-    await Itinerary.findByIdAndDelete(req.params.id);
-    res.json({ message: "Itinerary deleted successfully" });
-  } catch (err) {
-    res.status(500).json({ message: "Delete failed", error: err.message });
-  }
-};
-
-// ✅ Admin: Update itinerary
-const updateItinerary = async (req, res) => {
-  try {
-    const { title, days, places } = req.body;
-    const updated = await Itinerary.findByIdAndUpdate(
+    const updatedItinerary = await Itinerary.findByIdAndUpdate(
       req.params.id,
-      { title, days, places },
+      req.body,
       { new: true }
     );
-    res.json(updated);
-  } catch (err) {
-    res.status(500).json({ message: "Update failed", error: err.message });
+    if (!updatedItinerary) {
+      return res.status(404).json({ message: "Itinerary not found" });
+    }
+    res.status(200).json(updatedItinerary);
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
   }
 };
 
-module.exports = {
-  getAllItineraries,
-  createItinerary,
-  deleteItinerary,
-  updateItinerary,
+// DELETE /api/itineraries/admin/:id
+exports.deleteItinerary = async (req, res) => {
+  try {
+    const deletedItinerary = await Itinerary.findByIdAndDelete(req.params.id);
+    if (!deletedItinerary) {
+      return res.status(404).json({ message: "Itinerary not found" });
+    }
+    res.status(200).json({ message: "Itinerary deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
 };

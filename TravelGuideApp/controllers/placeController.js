@@ -10,11 +10,15 @@ const getRecommendedPlaces = async (req, res) => {
   }
 };
 
-// ✅ Get Unique Places (For Explore Page)
 const getUniquePlaces = async (req, res) => {
   try {
-    const uniquePlaces = await Place.find().limit(20); // You can filter with tags later
-    res.status(200).json(uniquePlaces);
+    const uniquePlaces = await Place.find().limit(20);
+    const formatted = uniquePlaces.map(p => ({
+      ...p._doc,
+      name: p.title,         // 👈 Add this
+      category: "Kathmandu", // 👈 Optional default category
+    }));
+    res.status(200).json(formatted);
   } catch (error) {
     res.status(500).json({ message: "Error fetching unique places", error: error.message });
   }
@@ -35,20 +39,24 @@ const addPlace = async (req, res) => {
   try {
     const { title, description, location, image } = req.body;
 
+    console.log("📝 Add Place Request Body:", req.body); // NEW LINE
+
     const newPlace = new Place({
       title,
       description,
       location: location || "Kathmandu",
       image,
-      addedBy: req.user.id,
+      addedBy: req.user?.id || "admin", // fallback if no user attached
     });
 
     await newPlace.save();
     res.status(201).json(newPlace);
   } catch (error) {
+    console.error("❌ Error adding place:", error); // <-- Important
     res.status(500).json({ message: "Error adding place", error: error.message });
   }
 };
+
 
 // ✅ Admin: Delete Place
 const deletePlace = async (req, res) => {
@@ -62,8 +70,9 @@ const deletePlace = async (req, res) => {
 
 module.exports = {
   getRecommendedPlaces,
-  getUniquePlaces,       // ✅ Now defined properly
+  getUniquePlaces,
   getAllPlaces,
-  addPlace,
+  addPlace,           
   deletePlace,
 };
+
