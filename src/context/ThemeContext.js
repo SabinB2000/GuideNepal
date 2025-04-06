@@ -1,19 +1,24 @@
-import { createContext, useState, useContext } from "react";
+// src/context/ThemeContext.js
+import React, { createContext, useContext, useState } from 'react';
 
-const ThemeContext = createContext(); // ✅ Create ThemeContext
+const ThemeContext = createContext();
 
 export const ThemeProvider = ({ children }) => {
-  const [isDark, setIsDark] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
 
-  const toggleTheme = () => setIsDark((prev) => !prev);
+  const toggleDarkMode = () => setDarkMode(prev => !prev);
 
   return (
-    <ThemeContext.Provider value={{ isDark, toggleTheme }}>
+    <ThemeContext.Provider value={{ darkMode, toggleDarkMode }}>
       {children}
     </ThemeContext.Provider>
   );
 };
 
-// ✅ Export ThemeContext for direct usage
-export const useTheme = () => useContext(ThemeContext);
-export default ThemeContext; // ✅ Fix: Ensure ThemeContext is the default export
+export const useTheme = () => {
+  const context = useContext(ThemeContext);
+  if (context === undefined) {
+    throw new Error('useTheme must be used within a ThemeProvider');
+  }
+  return context;
+};

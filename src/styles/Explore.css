@@ -1,0 +1,165 @@
+.explore-container {
+    position: relative;
+    padding: 20px;
+    max-width: 1200px;
+    margin: auto;
+    color: white;
+  }
+  
+  .explore-glass-background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    backdrop-filter: blur(10px);
+    background: rgba(255, 255, 255, 0.05);
+    z-index: -1;
+    border-radius: 16px;
+  }
+  
+  h2 {
+    text-align: center;
+    margin-bottom: 1rem;
+  }
+  
+  .location-btn {
+    display: block;
+    margin: 0 auto 1rem auto;
+    padding: 8px 16px;
+    background-color: #00b894;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s ease-in-out;
+  }
+  
+  .location-btn:hover {
+    background-color: #019875;
+  }
+  
+  .debug-coords {
+    text-align: center;
+    font-size: 0.9rem;
+    margin-bottom: 1rem;
+    opacity: 0.8;
+  }
+  
+  .place-list {
+    display: flex;
+    overflow-x: auto;
+    gap: 1rem;
+    padding-bottom: 20px;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+  }
+  
+  .place-list::-webkit-scrollbar {
+    display: none;
+  }
+  
+  .place-card {
+    flex: 0 0 300px;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(8px);
+    border-radius: 10px;
+    overflow: hidden;
+    scroll-snap-align: start;
+    border: 2px solid transparent;
+    transition: 0.2s ease;
+    cursor: pointer;
+  }
+  
+  .place-card.selected {
+    border-color: #00ffcc;
+  }
+  
+  .place-img {
+    width: 100%;
+    height: 160px;
+    object-fit: cover;
+  }
+  
+  .place-details {
+    padding: 10px 12px;
+  }
+  
+  .place-details h4 {
+    margin: 0 0 5px 0;
+    font-size: 1.1rem;
+  }
+  
+  .place-details p {
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+  }
+  
+  .badge {
+    background-color: #2ecc71;
+    padding: 3px 8px;
+    font-size: 0.75rem;
+    border-radius: 6px;
+    color: black;
+  }
+  
+  .map-section {
+    margin-top: 1.5rem;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+  }
+  
+  /* New: Itinerary Section */
+  .itinerary-controls {
+    text-align: center;
+    margin: 1rem auto;
+  }
+  
+  .create-btn {
+    padding: 8px 16px;
+    background-color: #00cec9;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    margin-bottom: 10px;
+  }
+  
+  .create-btn:hover {
+    background-color: #00b3b3;
+  }
+  
+  .itinerary-details {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 15px;
+    border-radius: 12px;
+    max-width: 600px;
+    margin: 0 auto 1.5rem auto;
+    color: white;
+  }
+  
+  .itinerary-details h3 {
+    text-align: center;
+    margin-bottom: 10px;
+  }
+  
+  .itinerary-details ol {
+    padding-left: 20px;
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+  
+  .reset-btn {
+    display: block;
+    margin: 10px auto 0;
+    padding: 8px 14px;
+    background: crimson;
+    border: none;
+    border-radius: 6px;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+  }
