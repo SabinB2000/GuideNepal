@@ -1,10 +1,11 @@
+// routes/userRoutes.js
 const express = require("express");
 const router = express.Router();
-const { protect } = require("../middleware/authMiddleware");
+const { authenticate } = require("../middleware/authMiddleware");
 const User = require("../models/User");
 
-// ✅ GET User Profile
-router.get("/profile/me", protect, async (req, res) => {
+// ✅ GET current user's profile
+router.get("/profile/me", authenticate, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) {

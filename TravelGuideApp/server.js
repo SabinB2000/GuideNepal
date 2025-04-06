@@ -1,55 +1,47 @@
+// server.js
 const express = require("express");
 const cors = require("cors");
 const dotenv = require("dotenv");
-const connectDB = require("./config/db"); // ✅ Ensure this function works
-const authRoutes = require("./routes/authRoutes");
-const profileRoutes = require("./routes/profileRoutes"); // ✅ Ensure this is imported
-const translate = require("google-translate-api-x"); // ✅ Import translation package
-const searchRoutes = require('./routes/searchRoutes');
-const userRoutes = require("./routes/userRoutes");
-const { protect } = require("./middleware/authMiddleware");
-
+const connectDB = require("./config/db");
+const translate = require("google-translate-api-x");
 
 dotenv.config();
-
 const app = express();
 
-// ✅ Middleware
-app.use(cors({ origin: "*", methods: ["GET", "POST"] })); 
-app.use(express.json()); // ✅ Required to parse JSON requests
-
-
-app.use(cors({
-  origin: ["http://localhost:5000"],
-  credentials: true
-}));
-
-
-// ✅ Connect to MongoDB (Remove Duplicate Call)
+// Connect to MongoDB
 connectDB().catch((err) => {
   console.error("❌ MongoDB Connection Failed:", err);
 });
 
-// ✅ Register Routes
-console.log("✅ Auth routes loaded!");
-app.use("/api/auth", authRoutes); // ✅ Use `/api/auth` prefix
-app.use("/api/profile", profileRoutes); // ✅ Ensure it's registered correctly
+// Middlewares
+app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(express.json());
 
-app.use("/api/profile", protect, profileRoutes); // ✅ Protect routes
-app.use("/api/searches", searchRoutes);
-app.use("/api/auth", userRoutes); 
+// Route Handlers
+app.use("/api/auth", require("./routes/authRoutes"));
+app.use("/api/profile", require("./routes/profileRoutes"));
+app.use("/api/searches", require("./routes/searchRoutes"));
+app.use("/api/users", require("./routes/userRoutes"));
+app.use("/api/places", require("./routes/placesRoutes"));
+app.use("/api/saved-places", require("./routes/savedPlacesRoutes"));
+app.use("/api/itineraries", require("./routes/itinerariesRoutes"));
+app.use("/api/events", require("./routes/eventsRoutes"));
+app.use("/uploads", express.static("uploads"));
 
 
+// Admin Routes
+app.use("/api/admin/users", require("./routes/adminUserRoutes"));
+app.use("/api/admin/places", require("./routes/adminPlaceRoutes"));
+app.use("/api/admin/itineraries", require("./routes/adminItineraryRoutes"));
+app.use("/api/admin/events", require("./routes/adminEventRoutes"));
+app.use("/api/admin", require("./routes/adminStatsRoutes"));
 
-
-// ✅ Fix: Ensure the /api/translate route exists
+// Translation Endpoint (unchanged)
 app.post("/api/translate", async (req, res) => {
   const { text, from, to } = req.body;
-
   if (!text || !from || !to) {
     return res.status(400).json({ error: "Missing required fields (text, from, to)" });
   }
-
   try {
     const result = await translate(text, { from, to });
     res.json({ translatedText: result.text });
@@ -59,11 +51,13 @@ app.post("/api/translate", async (req, res) => {
   }
 });
 
-// ✅ Default Route (Check if API is running)
+// Health Check
 app.get("/", (req, res) => {
-  res.send("API is running...");
+  res.send("🌍 Guide Nepal API is running...");
 });
 
-// ✅ Start Server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`✅ Server running on http://localhost:${PORT}`));
+// Start Server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => {
+  console.log(`✅ Server running on http://localhost:${PORT}`);
+});

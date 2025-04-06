@@ -1,34 +1,15 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
-const PlaceSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-  },
-  category: {
-    type: String,
-    required: true,
-  },
-  image: {
-    type: String,
-    default: "https://example.com/default-image.jpg", // ✅ Replace with a default image if none is provided
-  },
-  description: {
-    type: String,
-    default: "No description available.",
-  },
-  location: {
-    type: {
-      type: String,
-      enum: ["Point"],
-      default: "Point",
-    },
-    coordinates: {
-      type: [Number], // [longitude, latitude]
-      required: true,
-    },
-  },
-});
+const placeSchema = new mongoose.Schema({
+  title: { type: String, required: true },
+  description: String,
+  location: { type: String, default: "Kathmandu" },
+  image: String,
+  addedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User", // vendor/admin
+    required: true
+  }
+}, { timestamps: true });
 
-const Place = mongoose.model("Place", PlaceSchema);
-module.exports = Place;
+module.exports = mongoose.model("Place", placeSchema);
