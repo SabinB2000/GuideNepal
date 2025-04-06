@@ -26,6 +26,8 @@ app.use("/api/places", require("./routes/placesRoutes"));
 app.use("/api/saved-places", require("./routes/savedPlacesRoutes"));
 app.use("/api/itineraries", require("./routes/itinerariesRoutes"));
 app.use("/api/events", require("./routes/eventsRoutes"));
+app.use("/uploads", express.static("uploads"));
+
 
 // Admin Routes
 app.use("/api/admin/users", require("./routes/adminUserRoutes"));

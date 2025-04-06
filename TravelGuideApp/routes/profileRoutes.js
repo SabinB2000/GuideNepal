@@ -1,15 +1,29 @@
+// src/routes/profileRoutes.js
 const express = require("express");
-const { authenticate } = require("../middleware/authMiddleware"); // ✅ FIXED NAME
-const {
-  getProfile,
-  updateProfile,
-  changePassword,
-} = require("../controllers/profileController");
-
 const router = express.Router();
+const { authenticate } = require("../middleware/authMiddleware");
+const { getProfile, updateProfile, changePassword } = require("../controllers/profileController");
 
-router.get("/me", authenticate, getProfile); // ✅ Fetch User Profile
-router.put("/update", authenticate, updateProfile); // ✅ Update Profile
-router.put("/change-password", authenticate, changePassword); // ✅ Change Password
+// For image uploads via multer
+const multer = require("multer");
+const path = require("path");
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, "uploads/"); // Make sure this folder exists
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, Date.now() + ext);
+  },
+});
+const upload = multer({ storage });
+
+// GET profile
+router.get("/me", authenticate, getProfile);
+// PUT update profile (optional image)
+router.put("/update", authenticate, upload.single("profilePicture"), updateProfile);
+// PUT change password
+router.put("/change-password", authenticate, changePassword);
 
 module.exports = router;
