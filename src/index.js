@@ -5,11 +5,17 @@ import App from "./App";
 import "./index.css";
 import reportWebVitals from "./reportWebVitals";
 import axios from "axios";
+import { AuthProvider } from "./contexts/AuthContext";
+
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+
+
 root.render(
-  <BrowserRouter> {/* ✅ Wrap the entire App inside BrowserRouter */}
-    <App />
+  <BrowserRouter>
+    <AuthProvider>  
+      <App />
+    </AuthProvider>
   </BrowserRouter>
 );
 

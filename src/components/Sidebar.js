@@ -1,75 +1,72 @@
 // src/components/Sidebar.js
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
 import "../styles/Sidebar.css";
 
-const Sidebar = ({ handleLogout }) => {
-  const [isOpen, setIsOpen] = useState(false);
+export default function Sidebar() {
+  const { logout } = useAuth();
   const location = useLocation();
+  const [isOpen, setIsOpen] = useState(true);
 
-  // Updated active check: it considers the route active if the pathname matches
-  // or starts with the route path followed by a slash (for nested routes).
-  const isActive = (path) => {
-    return (
-      location.pathname === path ||
-      location.pathname.startsWith(path + "/")
-    );
-  };
+  const isActive = (path) =>
+    location.pathname === path || location.pathname.startsWith(path + "/");
 
   return (
-    <div className={`sidebar ${isOpen ? "open" : ""}`}>
-      <button className="menu-toggle" onClick={() => setIsOpen(!isOpen)}>
+    <div className={`sidebar ${isOpen ? "open" : "collapsed"}`}>
+      <button
+        className="menu-toggle"
+        onClick={() => setIsOpen((o) => !o)}
+      >
         ☰
       </button>
       <ul>
         <li className={isActive("/dashboard") ? "active" : ""}>
-          <Link to="/dashboard" className="menu-item">
-            🏠 <span className="menu-text">{isOpen && "Dashboard"}</span>
+          <Link to="/dashboard">
+            🏠 {isOpen && <span>Dashboard</span>}
           </Link>
         </li>
-        <li className={isActive("/itineraries") ? "active" : ""}>
-          <Link to="/itineraries" className="menu-item">
-            📅 <span className="menu-text">{isOpen && "My Itineraries"}</span>
+        <li className={isActive("/itinerary") ? "active" : ""}>
+          <Link to="/itinerary">
+            📅 {isOpen && <span>Itinerary</span>}
           </Link>
         </li>
         <li className={isActive("/vendors") ? "active" : ""}>
-          <Link to="/vendors" className="menu-item">
-            🛍️ <span className="menu-text">{isOpen && "Vendors & Events"}</span>
+          <Link to="/vendors">
+            🛍️ {isOpen && <span>Vendors</span>}
           </Link>
         </li>
         <li className={isActive("/explore") ? "active" : ""}>
-          <Link to="/explore" className="menu-item">
-            🧭 <span className="menu-text">{isOpen && "Explore Nepal"}</span>
+          <Link to="/explore">
+            🧭 {isOpen && <span>Explore</span>}
           </Link>
         </li>
         <li className={isActive("/map") ? "active" : ""}>
-          <Link to="/map" className="menu-item">
-            🗺️ <span className="menu-text">{isOpen && "Map & Navigation"}</span>
+          <Link to="/map">
+            🗺️ {isOpen && <span>Map</span>}
           </Link>
         </li>
         <li className={isActive("/translate") ? "active" : ""}>
-          <Link to="/translate" className="menu-item">
-            🌎 <span className="menu-text">{isOpen && "Translation Tool"}</span>
+          <Link to="/translate">
+            🌎 {isOpen && <span>Translate</span>}
           </Link>
         </li>
         <li className={isActive("/reviews") ? "active" : ""}>
-          <Link to="/reviews" className="menu-item">
-            ⭐ <span className="menu-text">{isOpen && "Reviews"}</span>
+          <Link to="/reviews">
+            ⭐ {isOpen && <span>Reviews</span>}
           </Link>
         </li>
         <li className={isActive("/profile") ? "active" : ""}>
-          <Link to="/profile" className="menu-item">
-            👤 <span className="menu-text">{isOpen && "Profile"}</span>
+          <Link to="/profile">
+            👤 {isOpen && <span>Profile</span>}
           </Link>
         </li>
         <li>
-          <button className="logout-btn" onClick={handleLogout}>
-            🚪 <span className="menu-text">{isOpen && "Logout"}</span>
+          <button className="logout-btn" onClick={logout}>
+            🚪 {isOpen && <span>Logout</span>}
           </button>
         </li>
       </ul>
     </div>
   );
-};
-
-export default Sidebar;
+}

@@ -11,3 +11,4 @@ export const translateText = async (text, from, to) => {
     return "Translation failed. Please try again.";
   }
 };
+    

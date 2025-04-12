@@ -5,16 +5,15 @@ import Sidebar from "./Sidebar";
 import AuthForm from "./AuthForm";
 import "../styles/Navbar.css";
 
-const Navbar = () => {
+export default function Navbar({ openAuth }) {
   const [showAuth, setShowAuth] = useState(false);
   const [user, setUser] = useState(null);
   const navigate = useNavigate();
 
-  // ✅ Load user from localStorage
+  // Load user from localStorage on mount
   useEffect(() => {
     const token = localStorage.getItem("token");
     const storedUser = localStorage.getItem("user");
-
     if (token && storedUser) {
       setUser(JSON.parse(storedUser));
     }
@@ -25,7 +24,7 @@ const Navbar = () => {
       title: "Logged Out!",
       text: "You have been logged out successfully.",
       icon: "info",
-      timer: 2000,
+      timer: 1500,
       showConfirmButton: false,
     }).then(() => {
       localStorage.removeItem("token");
@@ -40,23 +39,35 @@ const Navbar = () => {
       {user ? (
         <Sidebar user={user} handleLogout={handleLogout} />
       ) : (
-        <nav className="navbar">
-          <Link to="/" className="explore-nepal">Guide Nepal</Link>
-          <ul className="nav-links">
-            <li><Link to="/">Home</Link></li>
-            <li><Link to="/about">About</Link></li>
-            <li><Link to="/vendors">Vendors</Link></li>
-            <li><Link to="/reviews">Reviews</Link></li>
-            <Link to="/admin-login" className="nav-link">Admin</Link>
-
-          </ul>
-          <button className="login-btn" onClick={() => setShowAuth(true)}>LOGIN / SIGNUP</button>
+        <nav className="navbar navbar--minimal">
+          <Link
+            to="/"
+            className="navbar__logo"
+            onClick={() => {
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+          >
+            Guide Nepal
+          </Link>
+          <button
+            className="navbar__login-btn"
+            onClick={openAuth}
+          >
+            LOGIN / SIGNUP
+          </button>
         </nav>
       )}
 
-      {showAuth && <AuthForm closeAuth={() => setShowAuth(false)} setUser={setUser} />}
+      {showAuth && (
+        <AuthForm
+          closeAuth={() => {
+            setShowAuth(false);
+            const stored = localStorage.getItem("user");
+            if (stored) setUser(JSON.parse(stored));
+          }}
+          setUser={setUser}
+        />
+      )}
     </>
   );
-};
-
-export default Navbar;
+}

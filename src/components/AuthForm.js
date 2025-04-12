@@ -1,222 +1,232 @@
-// src/components/AuthForm.js
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../utils/axiosConfig";
+import axios from "axios";
 import Swal from "sweetalert2";
 import "../styles/AuthForm.css";
+import { useAuth } from "../contexts/AuthContext";
+import { Link } from "react-router-dom";
 
-const AuthForm = ({ closeAuth, setUser, user }) => {
+export default function AuthForm({ closeAuth }) {
   const navigate = useNavigate();
-  const [isLogin, setIsLogin] = useState(true);
-  const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+  const { login, user } = useAuth();
+
+  // Mode & role
+  const [mode, setMode] = useState("login");    // "login" or "signup"
+  const [role, setRole] = useState("user");     // "user" or "vendor"
+
+  // Form state
+  const [form, setForm] = useState({
+    name: "",
+    businessName: "",
     email: "",
     password: "",
     confirmPassword: "",
-    showPassword: false,
+    agree: false,
   });
 
-  // If the user is already logged in, redirect them
+  // Password visibility
+  const [showPass, setShowPass] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      navigate("/dashboard");
+      const dest = role === "vendor" ? "/vendor/dashboard" : "/dashboard";
+      navigate(dest, { replace: true });
+      closeAuth();
     }
-  }, [user, navigate]);
+  }, [user, role, navigate, closeAuth]);
 
-  const togglePassword = () => {
-    setFormData({ ...formData, showPassword: !formData.showPassword });
-  };
+  const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
 
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+    const { name, value, type, checked } = e.target;
+    setForm((f) => ({
+      ...f,
+      [name]: type === "checkbox" ? checked : value,
+    }));
   };
 
-  // Handle login
-  const handleLogin = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
-      const response = await axiosInstance.post("/auth/login", {
-        email: formData.email,
-        password: formData.password,
-      });
 
-      if (response.data.token) {
-        localStorage.setItem("token", response.data.token);
-        localStorage.setItem("user", JSON.stringify(response.data.user));
-        setUser(response.data.user);
-        Swal.fire({
-          title: "Success!",
-          text: "Login successful!",
-          icon: "success",
-          timer: 2000,
-          showConfirmButton: false,
-        });
-        navigate("/dashboard");
-        if (closeAuth) closeAuth();
+    // signup password match check
+    if (mode === "signup" && form.password !== form.confirmPassword) {
+      return Swal.fire("Error", "Passwords must match", "error");
+    }
+
+    try {
+      let url, payload;
+      if (mode === "login") {
+        url = role === "vendor"
+          ? `${API}/vendor/auth/login`
+          : `${API}/auth/login`;
+        payload = { email: form.email, password: form.password };
+      } else {
+        url = role === "vendor"
+          ? `${API}/vendor/auth/signup`
+          : `${API}/auth/signup`;
+        payload = {
+          name: form.name,
+          email: form.email,
+          password: form.password,
+        };
+        if (role === "vendor") payload.businessName = form.businessName;
       }
-    } catch (error) {
-      Swal.fire({
-        title: "Error!",
-        text: error.response?.data?.message || "Login failed",
-        icon: "error",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-    }
-  };
 
-  // Handle signup
-  const handleSignup = async (e) => {
-    e.preventDefault();
-    if (formData.password !== formData.confirmPassword) {
-      Swal.fire({
-        title: "Error!",
-        text: "Passwords don't match!",
-        icon: "error",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-      return;
-    }
+      const res = await axios.post(url, payload);
+      const { token, user: u } = res.data;
 
-    try {
-      const payload = {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-      };
-      await axiosInstance.post("/auth/signup", payload);
-      Swal.fire({
-        title: "Success!",
-        text: "Account created successfully! You can now log in.",
-        icon: "success",
-        timer: 2000,
-        showConfirmButton: false,
-      });
-      setIsLogin(true);
-    } catch (error) {
-      Swal.fire({
-        title: "Error!",
-        text: error.response?.data?.message || "Registration failed",
-        icon: "error",
-        timer: 2000,
-        showConfirmButton: false,
-      });
+      // Use context login
+      login(u, token);
+
+      Swal.fire("Success", `${mode} successful`, "success");
+      // Redirect happens in useEffect
+    } catch (err) {
+      Swal.fire("Error", err.response?.data?.message || err.message, "error");
     }
   };
 
   return (
     <div className="auth-overlay">
       <div className="auth-container">
-        <button
-          className="close-btn"
-          onClick={() => {
-            if (closeAuth) {
-              closeAuth();
-            } else {
-              navigate("/");
-            }
-          }}
-        >
-          ×
-        </button>
-        <div className="auth-header">
-          <h1>{isLogin ? "Welcome Back" : "Hello Friend!"}</h1>
-          <p>{isLogin ? "Sign in to continue" : "Start your journey"}</p>
+        <button className="close-btn" onClick={closeAuth}>×</button>
+        <h2>{mode === "login" ? "Sign In" : "Sign Up"}</h2>
+
+        <div className="form-group">
+          <label>
+            I am a:
+            <select value={role} onChange={(e) => setRole(e.target.value)}>
+              <option value="user">User</option>
+              <option value="vendor">Vendor</option>
+            </select>
+          </label>
         </div>
-        <form onSubmit={isLogin ? handleLogin : handleSignup}>
-          {!isLogin && (
+
+        <form onSubmit={handleSubmit}>
+          {mode === "signup" && (
             <>
               <div className="form-group">
                 <input
-                  type="text"
-                  name="firstName"
-                  placeholder="First Name"
-                  value={formData.firstName}
+                  name="name"
+                  placeholder="Full Name"
+                  value={form.name}
                   onChange={handleChange}
                   required
                 />
               </div>
-              <div className="form-group">
-                <input
-                  type="text"
-                  name="lastName"
-                  placeholder="Last Name"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+              {role === "vendor" && (
+                <div className="form-group">
+                  <input
+                    name="businessName"
+                    placeholder="Business Name"
+                    value={form.businessName}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              )}
             </>
           )}
+
           <div className="form-group">
             <input
               type="email"
               name="email"
               placeholder="Email"
-              value={formData.email}
+              value={form.email}
               onChange={handleChange}
               required
             />
           </div>
+
           <div className="form-group password-group">
             <input
-              type={formData.showPassword ? "text" : "password"}
+              type={showPass ? "text" : "password"}
               name="password"
               placeholder="Password"
-              value={formData.password}
+              value={form.password}
               onChange={handleChange}
               required
             />
             <button
               type="button"
               className="toggle-password"
-              onClick={togglePassword}
+              onClick={() => setShowPass((s) => !s)}
             >
-              {formData.showPassword ? "Hide" : "Show"}
+              {showPass ? "Hide" : "Show"}
             </button>
           </div>
-          {!isLogin && (
-            <div className="form-group">
+
+          {mode === "signup" && (
+            <div className="form-group password-group">
               <input
-                type="password"
+                type={showConfirm ? "text" : "password"}
                 name="confirmPassword"
                 placeholder="Confirm Password"
-                value={formData.confirmPassword}
+                value={form.confirmPassword}
                 onChange={handleChange}
                 required
               />
+              <button
+                type="button"
+                className="toggle-password"
+                onClick={() => setShowConfirm((s) => !s)}
+              >
+                {showConfirm ? "Hide" : "Show"}
+              </button>
             </div>
           )}
-          <button type="submit" className="auth-btn">
-            {isLogin ? "SIGN IN" : "SIGN UP"}
+
+          {mode === "signup" && (
+            <div className="form-group terms-group">
+              <input
+                type="checkbox"
+                id="agree"
+                name="agree"
+                checked={form.agree}
+                onChange={handleChange}
+                required
+              />
+              <label htmlFor="agree">
+                I have read and agree to the{" "}
+                <Link to="/terms" target="_blank" rel="noopener noreferrer">
+                  Terms & Conditions
+                </Link>
+              </label>
+            </div>
+          )}
+
+          <button
+            type="submit"
+            className="auth-btn"
+            disabled={mode === "signup" && !form.agree}
+          >
+            {mode === "login" ? "Log In" : "Sign Up"}
           </button>
         </form>
+
         <div className="auth-footer">
+          {mode === "login" && (
+            <p className="forgot-line">
+              <a href="/forgot-password">Forgot password?</a>
+            </p>
+          )}
           <p>
-            {isLogin ? "Don't have an account?" : "Already have an account?"}
+            {mode === "login"
+              ? "Don't have an account?"
+              : "Already have an account?"}
             <button
-              type="button"
-              className="switch-btn"
-              onClick={() => setIsLogin(!isLogin)}
+              className="mode-toggle-btn"
+              onClick={() =>
+                setMode((m) => (m === "login" ? "signup" : "login"))
+              }
             >
-              {isLogin ? "Sign Up" : "Sign In"}
+              {mode === "login" ? " Sign Up" : " Log In"}
             </button>
           </p>
-          {isLogin && (
-            <a href="#forgot" className="forgot-password">
-              Forgot password?
-            </a>
-          )}
         </div>
       </div>
     </div>
   );
-};
-
-export default AuthForm;
+}
