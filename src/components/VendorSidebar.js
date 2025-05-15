@@ -1,24 +1,30 @@
 import React, { useState, useEffect } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
+import axios from "axios";
+import Swal from "sweetalert2";
+import axiosInstance from "../utils/axiosConfig";
 import "../styles/VendorSidebar.css";
 
-export default function VendorSidebar({ onLogout }) {
+import { useAuth } from "../contexts/AuthContext";  // <-- import useAuth
+
+export default function VendorSidebar() {
   const [collapsed, setCollapsed] = useState(false);
+  const [stats, setStats] = useState({});
+  const { logout } = useAuth();                      // <-- get logout
   const navigate = useNavigate();
 
-  // Collapse automatically on small screens
   useEffect(() => {
-    const mq = window.matchMedia("(max-width: 768px)");
-    const handler = e => setCollapsed(e.matches);
-    handler(mq);
-    mq.addListener(handler);
-    return () => mq.removeListener(handler);
+    axiosInstance
+      .get("/vendor/dashboard")
+      .then((res) => setStats((prev) => ({ ...prev, ...res.data })))
+      .catch((err) => {
+        console.error("Vendor dashboard error:", err);
+      });
   }, []);
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
-    localStorage.removeItem("user");
-    onLogout?.();
+    logout();                                       // <-- call context logout
+    Swal.fire("Success", "Logged out successfully", "success");
     navigate("/", { replace: true });
   };
 

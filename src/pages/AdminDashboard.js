@@ -13,6 +13,8 @@ const AdminDashboard = () => {
     totalEvents: 0,
   });
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
+  const [sidebarWidth, setSidebarWidth] = useState(250); // Default sidebar width
   const navigate = useNavigate();
 
   const handleLogout = () => {
@@ -24,17 +26,20 @@ const AdminDashboard = () => {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        setIsLoading(true);
         const token = localStorage.getItem('token');
-        console.log("Admin token from localStorage:", token);
         if (!token) {
           setError("No token found. Please log in as admin.");
+          setIsLoading(false);
           return;
         }
         const res = await axiosInstance.get('/admin/stats');
         setStats(res.data);
       } catch (err) {
         console.error("Error fetching stats:", err);
-        setError('⚠️ Unable to fetch stats. Are you logged in as admin?');
+        setError('Unable to fetch stats. Please check your connection and try again.');
+      } finally {
+        setIsLoading(false);
       }
     };
     fetchStats();
@@ -42,50 +47,99 @@ const AdminDashboard = () => {
 
   return (
     <div className="admin-dashboard-container">
-      <AdminSidebar onLogout={handleLogout} />
-      <div className="admin-dashboard-content">
-        <div className="admin-card">
-          <h2 className="dashboard-heading">Welcome, Admin</h2>
-          <p className="dashboard-subtext">This is your control panel.</p>
-
-          {error && <p className="error-text">{error}</p>}
-
-          <div className="dashboard-stats">
-            <div className="dashboard-card">
-              <h3>Total Users</h3>
-              <p>{stats.totalUsers}</p>
-            </div>
-            <div className="dashboard-card">
-              <h3>Total Places</h3>
-              <p>{stats.totalPlaces}</p>
-            </div>
-            <div className="dashboard-card">
-              <h3>Total Itineraries</h3>
-              <p>{stats.totalItineraries}</p>
-            </div>
-            <div className="dashboard-card">
-              <h3>Total Events</h3>
-              <p>{stats.totalEvents}</p>
-            </div>
+      <AdminSidebar onLogout={handleLogout} onWidthChange={setSidebarWidth} />
+      <div 
+        className="admin-dashboard-content"
+        style={{ marginLeft: `${sidebarWidth}px` }}
+      >
+        <div className="dashboard-content-wrapper">
+          <div className="dashboard-header">
+            <h1>Admin Dashboard</h1>
+            <p className="welcome-text">Welcome back! Here's an overview of your platform statistics.</p>
           </div>
 
-          <div className="dashboard-actions">
-            <button className="dashboard-btn" onClick={() => navigate('/admin-manage-users')}>
-              ⚙️ Manage Users
-            </button>
-            <button className="dashboard-btn" onClick={() => navigate('/admin-manage-places')}>
-              🗺️ Manage Places
-            </button>
-            <button className="dashboard-btn" onClick={() => navigate('/admin-manage-itineraries')}>
-              📅 Manage Itineraries
-            </button>
-            <button className="dashboard-btn" onClick={() => navigate('/admin-manage-events')}>
-              🎫 Manage Events
-            </button>
-            <button className="dashboard-btn logout-btn" onClick={handleLogout}>
-              🚪 Logout
-            </button>
-          </div>
+          {error && (
+            <div className="error-alert">
+              <span className="alert-icon">⚠️</span>
+              {error}
+            </div>
+          )}
+
+          {isLoading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+              <p>Loading dashboard data...</p>
+            </div>
+          ) : (
+            <>
+              <div className="stats-grid">
+                <div className="stat-card user-stat">
+                  <div className="stat-icon">👥</div>
+                  <h3>Total Users</h3>
+                  <p className="stat-value">{stats.totalUsers.toLocaleString()}</p>
+                  <p className="stat-description">Registered accounts</p>
+                </div>
+                
+                <div className="stat-card place-stat">
+                  <div className="stat-icon">🗺️</div>
+                  <h3>Total Places</h3>
+                  <p className="stat-value">{stats.totalPlaces.toLocaleString()}</p>
+                  <p className="stat-description">Locations in database</p>
+                </div>
+                
+                <div className="stat-card itinerary-stat">
+                  <div className="stat-icon">📅</div>
+                  <h3>Total Itineraries</h3>
+                  <p className="stat-value">{stats.totalItineraries.toLocaleString()}</p>
+                  <p className="stat-description">Trip plans created</p>
+                </div>
+                
+                <div className="stat-card event-stat">
+                  <div className="stat-icon">🎫</div>
+                  <h3>Total Events</h3>
+                  <p className="stat-value">{stats.totalEvents.toLocaleString()}</p>
+                  <p className="stat-description">Upcoming events</p>
+                </div>
+              </div>
+
+              <div className="quick-actions">
+                <h2>Quick Actions</h2>
+                <div className="action-buttons">
+                  <button 
+                    className="action-btn manage-users"
+                    onClick={() => navigate('/admin-manage-users')}
+                  >
+                    <span className="btn-icon">👥</span>
+                    <span>Manage Users</span>
+                  </button>
+                  
+                  <button 
+                    className="action-btn manage-places"
+                    onClick={() => navigate('/admin-manage-places')}
+                  >
+                    <span className="btn-icon">🗺️</span>
+                    <span>Manage Places</span>
+                  </button>
+                  
+                  <button 
+                    className="action-btn manage-itineraries"
+                    onClick={() => navigate('/admin-manage-itineraries')}
+                  >
+                    <span className="btn-icon">📅</span>
+                    <span>Manage Itineraries</span>
+                  </button>
+                  
+                  <button 
+                    className="action-btn manage-events"
+                    onClick={() => navigate('/admin-manage-events')}
+                  >
+                    <span className="btn-icon">🎫</span>
+                    <span>Manage Events</span>
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>

@@ -1,21 +1,24 @@
 // routes/itinerariesRoutes.js
 const express = require("express");
 const router = express.Router();
+
 const {
   getItineraries,
-  addItinerary,
-  editItinerary,
+  getItineraryById,
+  createItinerary,
+  updateItinerary,
   deleteItinerary,
 } = require("../controllers/itineraryController");
-const { authenticate, isAdmin } = require("../middleware/authMiddleware");
 
-// Admin routes for itinerary management
-router.get("/admin", authenticate, isAdmin, getItineraries);
-router.post("/admin", authenticate, isAdmin, addItinerary);
-router.put("/admin/:id", authenticate, isAdmin, editItinerary);
-router.delete("/admin/:id", authenticate, isAdmin, deleteItinerary);
+const { authenticate } = require("../middleware/authMiddleware");
 
-// Public route for users to view itineraries
-router.get("/", getItineraries);
+// Public: list & view
+router.get("/", authenticate, getItineraries);
+router.get("/:id", authenticate, getItineraryById);
+
+// Protected: create/update/delete
+router.post("/", authenticate, createItinerary);
+router.put("/:id", authenticate, updateItinerary);
+router.delete("/:id", authenticate, deleteItinerary);
 
 module.exports = router;

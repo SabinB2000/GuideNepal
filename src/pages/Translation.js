@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Tesseract from "tesseract.js";
+import { FaExchangeAlt, FaMicrophone, FaPlay, FaStop, FaVolumeUp, FaImage, FaTimes } from "react-icons/fa";
+import { IoIosSwap } from "react-icons/io";
+
 import "../styles/Translation.css";
 
 const languages = [
@@ -33,6 +36,8 @@ const Translation = () => {
   const [translatedImageText, setTranslatedImageText] = useState("");
   const [selectedImage, setSelectedImage] = useState(null);
   const [voices, setVoices] = useState([]);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [autoPlay, setAutoPlay] = useState(true);
 
   useEffect(() => {
     if (inputText.trim() !== "") {
@@ -48,82 +53,66 @@ const Translation = () => {
 
     loadVoices();
     window.speechSynthesis.onvoiceschanged = loadVoices;
+
+    return () => {
+      window.speechSynthesis.cancel();
+    };
   }, []);
 
   const handleTranslate = async () => {
     if (!inputText.trim()) return;
 
-    console.log("Sending API request with:", {
+    try {
+      const response = await axios.post("http://localhost:5000/api/translate", {
         text: inputText,
         from: sourceLang,
-        to: targetLang
-    });
+        to: targetLang,
+      });
 
-    try {
-        const response = await axios.post("http://localhost:5000/api/translate", {
-            text: inputText,
-            from: sourceLang,
-            to: targetLang,
-        });
+      const translated = response.data.translatedText || "Translation failed.";
+      setTranslatedText(translated);
 
-        console.log("Translation Response:", response.data);
-        setTranslatedText(response.data.translatedText || "Translation failed.");
+      // Auto-play the translation if enabled
+      if (autoPlay) {
+        handlePlayTranslation(translated);
+      }
     } catch (error) {
-        console.error("Translation Error:", error.response?.data || error.message);
-        setTranslatedText("Translation failed. Try again.");
+      console.error("Translation Error:", error);
+      setTranslatedText("Translation failed. Try again.");
     }
-};
-
-const speakWithDelay = (text, lang) => {
-  window.speechSynthesis.onvoiceschanged = () => {
-      handlePlayTranslation(text, lang);
   };
 
-  if (window.speechSynthesis.getVoices().length > 0) {
-      handlePlayTranslation(text, lang);
-  }
-};
+  const handlePlayTranslation = (text = translatedText) => {
+    if (!text.trim()) return;
 
-const handlePlayTranslation = () => {
-  if (!translatedText.trim()) return;
+    // Stop any ongoing speech
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
 
-  // Stop any ongoing speech before starting new one
-  window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = targetLang;
+    setIsSpeaking(true);
 
-  // Get available voices
-  let voices = window.speechSynthesis.getVoices();
-  console.log("Available Voices:", voices);
+    // Find appropriate voice
+    const availableVoices = window.speechSynthesis.getVoices();
+    if (targetLang === "ne") {
+      const nepaliVoice = availableVoices.find((v) => v.lang.includes("hi") || v.lang.includes("ne"));
+      if (nepaliVoice) utterance.voice = nepaliVoice;
+    } else {
+      const selectedVoice = availableVoices.find((v) => v.lang.includes(targetLang));
+      if (selectedVoice) utterance.voice = selectedVoice;
+    }
 
-  const utterance = new SpeechSynthesisUtterance(translatedText);
-  utterance.lang = targetLang; // Set language
+    utterance.onend = () => setIsSpeaking(false);
+    utterance.onerror = () => setIsSpeaking(false);
 
-  // Fallback for Nepali (Use Hindi if Nepali isn't available)
-  if (targetLang === "ne") {
-      const nepaliVoice = voices.find((v) => v.lang.includes("hi") || v.lang.includes("ne"));
-      if (nepaliVoice) {
-          utterance.voice = nepaliVoice;
-      } else {
-          console.warn("No Nepali/Hindi voice found, using default.");
-      }
-  } else {
-      // For other languages, pick the best available match
-      const selectedVoice = voices.find((v) => v.lang.includes(targetLang));
-      if (selectedVoice) {
-          utterance.voice = selectedVoice;
-      }
-  }
+    window.speechSynthesis.speak(utterance);
+  };
 
-  // Ensure voices are fully loaded before speaking
-  if (voices.length === 0) {
-      window.speechSynthesis.onvoiceschanged = () => {
-          window.speechSynthesis.speak(utterance);
-      };
-  } else {
-      window.speechSynthesis.speak(utterance);
-  }
-};
-
-
+  const handleStopSpeaking = () => {
+    window.speechSynthesis.cancel();
+    setIsSpeaking(false);
+  };
 
   const handleVoiceInput = () => {
     if (!window.SpeechRecognition && !window.webkitSpeechRecognition) {
@@ -137,13 +126,10 @@ const handlePlayTranslation = () => {
     recognition.continuous = false;
 
     recognition.onstart = () => setIsListening(true);
-
     recognition.onresult = (event) => {
-      const spokenText = event.results[0][0].transcript;
-      setInputText(spokenText);
+      setInputText(event.results[0][0].transcript);
       setIsListening(false);
     };
-
     recognition.onerror = () => setIsListening(false);
     recognition.onend = () => setIsListening(false);
 
@@ -156,19 +142,14 @@ const handlePlayTranslation = () => {
 
     setSelectedImage(URL.createObjectURL(file));
 
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-
-    reader.onload = () => {
-      Tesseract.recognize(reader.result, "eng+nep", { logger: (m) => console.log(m) })
-        .then(({ data: { text } }) => {
-          handleTranslateImageText(text);
-        })
-        .catch((error) => {
-          console.error("OCR Error:", error);
-          setTranslatedImageText("OCR failed. Please try another image.");
-        });
-    };
+    Tesseract.recognize(file, "eng+nep")
+      .then(({ data: { text } }) => {
+        handleTranslateImageText(text);
+      })
+      .catch((error) => {
+        console.error("OCR Error:", error);
+        setTranslatedImageText("OCR failed. Please try another image.");
+      });
   };
 
   const handleTranslateImageText = async (text) => {
@@ -181,7 +162,12 @@ const handlePlayTranslation = () => {
         to: "en",
       });
 
-      setTranslatedImageText(response.data.translatedText || "Translation failed.");
+      const translated = response.data.translatedText || "Translation failed.";
+      setTranslatedImageText(translated);
+      
+      if (autoPlay) {
+        handlePlayTranslation(translated);
+      }
     } catch (error) {
       console.error("Translation Error:", error);
       setTranslatedImageText("Translation failed. Try again.");
@@ -194,65 +180,146 @@ const handlePlayTranslation = () => {
   };
 
   return (
-    <div className="translation-container">
-      <h2 className="title">Text Translation</h2>
-
-      <div className="language-selection">
-        <select value={sourceLang} onChange={(e) => setSourceLang(e.target.value)}>
-          {languages.map((lang) => (
-            <option key={lang.code} value={lang.code}>{lang.name}</option>
-          ))}
-        </select>
-
-        <button className="swap-button" onClick={() => { setSourceLang(targetLang); setTargetLang(sourceLang); }}>
-          ↔️
-        </button>
-
-        <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
-          {languages.map((lang) => (
-            <option key={lang.code} value={lang.code}>{lang.name}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="translation-box">
-        <textarea className="input-box" placeholder="Enter text..." value={inputText} onChange={(e) => setInputText(e.target.value)} />
-        <button className="mic-button" onClick={handleVoiceInput} disabled={isListening}>
-          {isListening ? "Listening..." : "Speak"}
-        </button>
-        <textarea className="output-box" placeholder="Translation will appear here..." value={translatedText} readOnly />
-      </div>
-
-      <button className="translate-button" onClick={handleTranslate}>Translate</button>
-      <button className="play-button" onClick={handlePlayTranslation}>Play</button>
-
-      <h3 className="common-phrases-title">Common Phrases</h3>
-      <div className="common-phrases">
-        {commonPhrases.map((phrase, index) => (
-          <button key={index} className="phrase-button" onClick={() => setInputText(phrase.text)}>
-            {phrase.text}
-          </button>
-        ))}
-      </div>
-
-      <h3 className="image-translation-title">Image Translation</h3>
-      <input type="file" accept="image/*" onChange={handleImageUpload} />
-
-      {selectedImage && (
-        <div className="image-translation-container">
-          <div className="image-section">
-            <img src={selectedImage} alt="Uploaded" className="uploaded-image" />
-            <button className="close-button" onClick={handleCloseImage}>❌</button>
+    <div className="translation-app">
+      <div className="background-blur"></div>
+      
+      <div className="translation-container">
+        <h1 className="app-title">
+          <IoIosSwap className="title-icon" />
+          Language Translator
+        </h1>
+        
+        <div className="language-controls">
+          <div className="language-selector">
+            <label>From:</label>
+            <select value={sourceLang} onChange={(e) => setSourceLang(e.target.value)}>
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>{lang.name}</option>
+              ))}
+            </select>
           </div>
-          <textarea className="image-translation-box" value={translatedImageText} readOnly placeholder="Translated text will appear here..." />
+          
+          <button 
+            className="swap-btn" 
+            onClick={() => { 
+              setSourceLang(targetLang); 
+              setTargetLang(sourceLang); 
+            }}
+          >
+            <FaExchangeAlt size={24} color="#fff" /> 
+          </button>
+          
+          <div className="language-selector">
+            <label>To:</label>
+            <select value={targetLang} onChange={(e) => setTargetLang(e.target.value)}>
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>{lang.name}</option>
+              ))}
+            </select>
+          </div>
         </div>
-      )}
+        
+        <div className="translation-box">
+          <div className="input-section">
+            <textarea 
+              className="input-text" 
+              placeholder="Enter text to translate..."
+              value={inputText}
+              onChange={(e) => setInputText(e.target.value)}
+            />
+            <button 
+              className={`mic-btn ${isListening ? 'active' : ''}`}
+              onClick={handleVoiceInput}
+            >
+              <FaMicrophone />
+              {isListening ? ' Listening...' : ''}
+            </button>
+          </div>
+          
+          <div className="output-section">
+            <textarea 
+              className="output-text" 
+              placeholder="Translation will appear here..."
+              value={translatedText}
+              readOnly
+            />
+            <div className="output-controls">
+              {isSpeaking ? (
+                <button className="stop-btn" onClick={handleStopSpeaking}>
+                  <FaStop size={24} color="#fff" />
+                </button>
+              ) : (
+                <button className="play-btn" onClick={() => handlePlayTranslation()}>
+                  <FaPlay size={24} color="#fff" />
+                </button>
+              )}
+              <div className="auto-play-toggle">
+                <label>
+                  <input 
+                    type="checkbox" 
+                    checked={autoPlay}
+                    onChange={() => setAutoPlay(!autoPlay)}
+                  />
+                  <span>Auto Play</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <button className="translate-btn" onClick={handleTranslate}>
+          <IoIosSwap /> Translate
+        </button>
+        
+        <div className="common-phrases-section">
+          <h3>Common Phrases</h3>
+          <div className="phrase-buttons">
+            {commonPhrases.map((phrase, index) => (
+              <button 
+                key={index} 
+                className="phrase-btn"
+                onClick={() => setInputText(phrase.text)}
+              >
+                {phrase.text}
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="image-translation-section">
+          <h3>
+            <FaImage /> Image Translation
+          </h3>
+          <label className="image-upload-btn">
+            Choose Image
+            <input 
+              type="file" 
+              accept="image/*" 
+              onChange={handleImageUpload}
+              style={{ display: 'none' }}
+            />
+          </label>
+          
+          {selectedImage && (
+            <div className="image-result">
+              <div className="image-preview">
+                <img src={selectedImage} alt="Uploaded content" />
+                <button className="close-btn" onClick={handleCloseImage}>
+                  <FaTimes />
+                </button>
+              </div>
+              <textarea 
+                className="image-translation-text"
+                value={translatedImageText}
+                readOnly
+                placeholder="Image translation will appear here..."
+              />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
-    
-    
   );
 };
 
 export default Translation;
-
-

@@ -17,8 +17,8 @@ const createEvent = async (req, res) => {
     const event = new Event({
       title,
       description,
-      location,
       date,
+      location,
       createdBy: req.user.id
     });
     await event.save();

@@ -2,18 +2,16 @@
 const jwt = require("jsonwebtoken");
 const User = require("../models/User");
 
+// 1) Authenticate user from Bearer token
 const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
-  console.log("Auth header received:", authHeader);
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     return res.status(401).json({ error: "No token, authorization denied" });
   }
   try {
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    console.log("Decoded token:", decoded);
     req.user = await User.findById(decoded.id).select("-password");
-    console.log("Authenticated user:", req.user);
     if (!req.user) {
       return res.status(401).json({ error: "User not found" });
     }
@@ -24,12 +22,24 @@ const authenticate = async (req, res, next) => {
   }
 };
 
+// 2) Authorize based on exact role
+const authorizeRole = (role) => (req, res, next) => {
+  if (!req.user || req.user.role !== role) {
+    return res.status(403).json({ message: "Forbidden: insufficient privileges" });
+  }
+  next();
+};
+
+// 3) Shortcut for admin
 const isAdmin = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
     return next();
-  } else {
-    return res.status(403).json({ message: "Access denied: Admins only" });
   }
+  return res.status(403).json({ message: "Access denied: Admins only" });
 };
 
-module.exports = { authenticate, isAdmin };
+module.exports = {
+  authenticate,
+  authorizeRole,
+  isAdmin,
+};

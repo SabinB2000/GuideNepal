@@ -1,21 +1,33 @@
 // routes/adminItineraryRoutes.js
 const express = require("express");
 const router = express.Router();
-const { authenticate, isAdmin } = require("../middleware/authMiddleware");
-const {
-  getItineraries,
-  addItinerary,
-  editItinerary,
-  deleteItinerary
-} = require("../controllers/itineraryController");
 
-// Route to retrieve all itineraries
-router.get("/", authenticate, isAdmin, getItineraries);
-// Route to add a new itinerary
-router.post("/", authenticate, isAdmin, addItinerary);
-// Route to edit an existing itinerary
-router.put("/:id", authenticate, isAdmin, editItinerary);
-// Route to delete an itinerary
-router.delete("/:id", authenticate, isAdmin, deleteItinerary);
+const {
+  getAllItineraries,
+  getItinerary,
+  createItinerary,
+  updateItinerary,
+  deleteItinerary
+} = require("../controllers/adminItineraryController");
+
+const { authenticate, authorizeRole } = require("../middleware/authMiddleware");
+
+// Only admin can manage:
+router.use(authenticate, authorizeRole("admin"));
+
+// List all
+router.get("/", getAllItineraries);
+
+// Get one
+router.get("/:id", getItinerary);
+
+// Create
+router.post("/", createItinerary);
+
+// Update
+router.put("/:id", updateItinerary);
+
+// Delete
+router.delete("/:id", deleteItinerary);
 
 module.exports = router;

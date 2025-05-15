@@ -1,3 +1,4 @@
+// src/pages/vendor/Dashboard.js
 import React, { useEffect, useState } from "react";
 import axiosInstance from "../../utils/axiosConfig";
 import VendorSidebar from "../../components/VendorSidebar";
@@ -15,15 +16,27 @@ export default function VendorDashboard() {
   });
 
   useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      // Optionally, navigate to the login page if no token is found:
+      // navigate('/vendor/login') or show an error message.
+      return;
+    }
     axiosInstance
       .get("/vendor/dashboard")
-      .then(res => setStats(res.data))
-      .catch(err => console.error(err));
+      .then((res) => {
+        setStats((prev) => ({ ...prev, ...res.data }));
+      })
+      .catch((err) => {
+        console.error("Vendor dashboard error:", err);
+        // Optionally, show a user-friendly message if needed:
+        // Swal.fire("Error", "Could not load vendor dashboard", "error");
+      });
   }, []);
-
+  
   return (
     <div className="vendor-page">
-      <VendorSidebar onLogout={() => { /* clear user state */ }} />
+      <VendorSidebar onLogout={() => {/* clear user state via context logout */}} />
       <div className="vendor-content">
         <h1>Welcome, Vendor!</h1>
 
@@ -52,7 +65,7 @@ export default function VendorDashboard() {
             <p>No places yet.</p>
           ) : (
             <ul>
-              {stats.recentPlaces.map(place => (
+              {stats.recentPlaces.map((place) => (
                 <li key={place._id}>
                   <Link to={`/vendor/places/${place._id}`}>
                     {place.title}

@@ -2,7 +2,8 @@
 import React from "react";
 import { Navigate, Outlet } from "react-router-dom";
 
-export default function VendorRoute() {
-  const token = localStorage.getItem("token");
-  return token ? <Outlet /> : <Navigate to="/vendor" replace />;
-}
+const VendorRoute = ({ user }) => {
+  return user && user.role === "vendor" ? <Outlet /> : <Navigate to="/" replace />;
+};
+
+export default VendorRoute;

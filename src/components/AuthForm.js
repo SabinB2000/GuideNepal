@@ -1,232 +1,394 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import axios from "axios";
+import { useNavigate, Link } from "react-router-dom";
+import axiosInstance from "../utils/axiosConfig"; // Use axiosInstance
 import Swal from "sweetalert2";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  FiEye,
+  FiEyeOff,
+  FiX,
+  FiUser,
+  FiBriefcase,
+  FiMail,
+  FiLock,
+  FiCheck,
+} from "react-icons/fi";
 import "../styles/AuthForm.css";
 import { useAuth } from "../contexts/AuthContext";
-import { Link } from "react-router-dom";
 
 export default function AuthForm({ closeAuth }) {
   const navigate = useNavigate();
   const { login, user } = useAuth();
 
-  // Mode & role
-  const [mode, setMode] = useState("login");    // "login" or "signup"
-  const [role, setRole] = useState("user");     // "user" or "vendor"
+  const [mode, setMode] = useState("login");
+  const [role, setRole] = useState("user");
+  const [step, setStep] = useState("form");
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Form state
   const [form, setForm] = useState({
-    name: "",
+    firstName: "",
+    lastName: "",
     businessName: "",
     email: "",
     password: "",
     confirmPassword: "",
     agree: false,
   });
-
-  // Password visibility
+  const [otp, setOtp] = useState("");
   const [showPass, setShowPass] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
-  // Redirect if already logged in
   useEffect(() => {
     if (user) {
-      const dest = role === "vendor" ? "/vendor/dashboard" : "/dashboard";
+      const dest = user.role === "vendor" ? "/vendor/dashboard" : "/dashboard";
       navigate(dest, { replace: true });
-      closeAuth();
+      closeAuth?.();
     }
-  }, [user, role, navigate, closeAuth]);
-
-  const API = process.env.REACT_APP_API_URL || "http://localhost:5000/api";
+  }, [user, navigate, closeAuth]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setForm((f) => ({
-      ...f,
-      [name]: type === "checkbox" ? checked : value,
-    }));
+    setForm((f) => ({ ...f, [name]: type === "checkbox" ? checked : value }));
   };
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  const validEmail = (email) => /^\S+@\S+\.\S+$/.test(email);
+  const validPassword = (pw) =>
+    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).{8,}$/.test(pw);
 
-    // signup password match check
-    if (mode === "signup" && form.password !== form.confirmPassword) {
-      return Swal.fire("Error", "Passwords must match", "error");
+  const handleRequestOtp = async () => {
+    if (!validEmail(form.email)) {
+      return Swal.fire("Error", "Enter a valid email address", "error");
+    }
+    if (mode === "signup") {
+      if (!form.firstName || !form.lastName) {
+        return Swal.fire("Error", "First name and last name are required", "error");
+      }
+      if (!validPassword(form.password)) {
+        return Swal.fire(
+          "Weak password",
+          "Use ≥8 chars, upper&lower, number & symbol",
+          "error"
+        );
+      }
+      if (form.password !== form.confirmPassword) {
+        return Swal.fire("Error", "Passwords must match", "error");
+      }
+      if (!form.agree) {
+        return Swal.fire("Error", "You must agree to T&C", "error");
+      }
     }
 
     try {
-      let url, payload;
-      if (mode === "login") {
-        url = role === "vendor"
-          ? `${API}/vendor/auth/login`
-          : `${API}/auth/login`;
-        payload = { email: form.email, password: form.password };
-      } else {
-        url = role === "vendor"
-          ? `${API}/vendor/auth/signup`
-          : `${API}/auth/signup`;
-        payload = {
-          name: form.name,
-          email: form.email,
-          password: form.password,
-        };
-        if (role === "vendor") payload.businessName = form.businessName;
-      }
-
-      const res = await axios.post(url, payload);
-      const { token, user: u } = res.data;
-
-      // Use context login
-      login(u, token);
-
-      Swal.fire("Success", `${mode} successful`, "success");
-      // Redirect happens in useEffect
+      await axiosInstance.post("/auth/request-otp", { email: form.email });
+      setStep("otp");
+      Swal.fire("Check your inbox", "We sent you a verification code", "info");
     } catch (err) {
       Swal.fire("Error", err.response?.data?.message || err.message, "error");
     }
   };
 
+  const handleVerifyAndSignup = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    try {
+      const url = role === "vendor" ? "/vendor/auth/signup" : "/auth/signup";
+      await axiosInstance.post(url, { ...form, otp });
+      Swal.fire("Success", "Registration complete! Please log in.", "success");
+      setMode("login");
+      setStep("form");
+      setForm({
+        firstName: "",
+        lastName: "",
+        businessName: "",
+        email: "",
+        password: "",
+        confirmPassword: "",
+        agree: false,
+      });
+      setOtp("");
+    } catch (err) {
+      Swal.fire("Error", err.response?.data?.message || err.message, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (mode === "signup") {
+      return handleRequestOtp();
+    }
+
+    setIsLoading(true);
+    try {
+      const url = role === "vendor" ? "/vendor/auth/login" : "/auth/login";
+      const { data } = await axiosInstance.post(url, {
+        email: form.email,
+        password: form.password,
+      });
+      login(data.user, data.token);
+      navigate(data.user.role === "vendor" ? "/vendor/dashboard" : "/dashboard");
+    } catch (err) {
+      Swal.fire("Error", err.response?.data?.message || err.message, "error");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const toggleMode = () => {
+    setMode((m) => (m === "login" ? "signup" : "login"));
+    setStep("form");
+    setForm({
+      firstName: "",
+      lastName: "",
+      businessName: "",
+      email: "",
+      password: "",
+      confirmPassword: "",
+      agree: false,
+    });
+    setOtp("");
+  };
+
+  const handleForgot = () => {
+    closeAuth?.();
+    navigate("/forgot-password");
+  };
+
   return (
-    <div className="auth-overlay">
-      <div className="auth-container">
-        <button className="close-btn" onClick={closeAuth}>×</button>
-        <h2>{mode === "login" ? "Sign In" : "Sign Up"}</h2>
-
-        <div className="form-group">
-          <label>
-            I am a:
-            <select value={role} onChange={(e) => setRole(e.target.value)}>
-              <option value="user">User</option>
-              <option value="vendor">Vendor</option>
-            </select>
-          </label>
-        </div>
-
-        <form onSubmit={handleSubmit}>
-          {mode === "signup" && (
-            <>
-              <div className="form-group">
-                <input
-                  name="name"
-                  placeholder="Full Name"
-                  value={form.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-              {role === "vendor" && (
-                <div className="form-group">
-                  <input
-                    name="businessName"
-                    placeholder="Business Name"
-                    value={form.businessName}
-                    onChange={handleChange}
-                    required
-                  />
-                </div>
-              )}
-            </>
-          )}
-
-          <div className="form-group">
-            <input
-              type="email"
-              name="email"
-              placeholder="Email"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-
-          <div className="form-group password-group">
-            <input
-              type={showPass ? "text" : "password"}
-              name="password"
-              placeholder="Password"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-            <button
-              type="button"
-              className="toggle-password"
-              onClick={() => setShowPass((s) => !s)}
-            >
-              {showPass ? "Hide" : "Show"}
-            </button>
-          </div>
-
-          {mode === "signup" && (
-            <div className="form-group password-group">
-              <input
-                type={showConfirm ? "text" : "password"}
-                name="confirmPassword"
-                placeholder="Confirm Password"
-                value={form.confirmPassword}
-                onChange={handleChange}
-                required
-              />
-              <button
-                type="button"
-                className="toggle-password"
-                onClick={() => setShowConfirm((s) => !s)}
-              >
-                {showConfirm ? "Hide" : "Show"}
-              </button>
-            </div>
-          )}
-
-          {mode === "signup" && (
-            <div className="form-group terms-group">
-              <input
-                type="checkbox"
-                id="agree"
-                name="agree"
-                checked={form.agree}
-                onChange={handleChange}
-                required
-              />
-              <label htmlFor="agree">
-                I have read and agree to the{" "}
-                <Link to="/terms" target="_blank" rel="noopener noreferrer">
-                  Terms & Conditions
-                </Link>
-              </label>
-            </div>
-          )}
-
-          <button
-            type="submit"
-            className="auth-btn"
-            disabled={mode === "signup" && !form.agree}
-          >
-            {mode === "login" ? "Log In" : "Sign Up"}
+    <AnimatePresence>
+      <motion.div
+        className="auth-overlay"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+      >
+        <motion.div
+          className="auth-container"
+          initial={{ y: 50, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          exit={{ y: 50, opacity: 0 }}
+        >
+          <button className="close-btn" onClick={() => closeAuth?.()}>
+            <FiX size={18} />
           </button>
-        </form>
 
-        <div className="auth-footer">
-          {mode === "login" && (
-            <p className="forgot-line">
-              <a href="/forgot-password">Forgot password?</a>
+          <div className="auth-header">
+            <h2>
+              {mode === "login"
+                ? "Welcome Back"
+                : step === "form"
+                ? "Create Account"
+                : "Enter Verification Code"}
+            </h2>
+            <p>
+              {mode === "login"
+                ? "Sign in to continue"
+                : step === "form"
+                ? "Fill in your details"
+                : "We’ve emailed you a code"}
             </p>
-          )}
-          <p>
-            {mode === "login"
-              ? "Don't have an account?"
-              : "Already have an account?"}
+          </div>
+
+          <div className="role-selector">
             <button
-              className="mode-toggle-btn"
-              onClick={() =>
-                setMode((m) => (m === "login" ? "signup" : "login"))
-              }
+              className={`role-btn ${role === "user" ? "active" : ""}`}
+              onClick={() => setRole("user")}
+              disabled={mode === "login"}
             >
-              {mode === "login" ? " Sign Up" : " Log In"}
+              <FiUser className="role-icon" /> Traveler
             </button>
-          </p>
-        </div>
-      </div>
-    </div>
+            <button
+              className={`role-btn ${role === "vendor" ? "active" : ""}`}
+              onClick={() => setRole("vendor")}
+              disabled={mode === "login"}
+            >
+              <FiBriefcase className="role-icon" /> Vendor
+            </button>
+          </div>
+
+          <form
+            onSubmit={step === "otp" ? handleVerifyAndSignup : handleSubmit}
+          >
+            {step === "form" ? (
+              <>
+                {mode === "signup" && (
+                  <>
+                    <div className="form-group">
+                      <div className="input-wrapper">
+                        <FiUser className="input-icon" />
+                        <input
+                          name="firstName"
+                          placeholder="First Name"
+                          value={form.firstName}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                    <div className="form-group">
+                      <div className="input-wrapper">
+                        <FiUser className="input-icon" />
+                        <input
+                          name="lastName"
+                          placeholder="Last Name"
+                          value={form.lastName}
+                          onChange={handleChange}
+                          required
+                        />
+                      </div>
+                    </div>
+                    {role === "vendor" && (
+                      <div className="form-group">
+                        <div className="input-wrapper">
+                          <FiBriefcase className="input-icon" />
+                          <input
+                            name="businessName"
+                            placeholder="Business Name"
+                            value={form.businessName}
+                            onChange={handleChange}
+                            required
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                <div className="form-group">
+                  <div className="input-wrapper">
+                    <FiMail className="input-icon" />
+                    <input
+                      type="email"
+                      name="email"
+                      placeholder="Email Address"
+                      value={form.email}
+                      onChange={handleChange}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <div className="input-wrapper">
+                    <FiLock className="input-icon" />
+                    <input
+                      type={showPass ? "text" : "password"}
+                      name="password"
+                      placeholder="Password"
+                      value={form.password}
+                      onChange={handleChange}
+                      required
+                    />
+                    <button
+                      type="button"
+                      className="toggle-password"
+                      onClick={() => setShowPass((s) => !s)}
+                    >
+                      {showPass ? <FiEyeOff /> : <FiEye />}
+                    </button>
+                  </div>
+                </div>
+
+                {mode === "signup" && (
+                  <div className="form-group">
+                    <div className="input-wrapper">
+                      <FiLock className="input-icon" />
+                      <input
+                        type={showConfirm ? "text" : "password"}
+                        name="confirmPassword"
+                        placeholder="Confirm Password"
+                        value={form.confirmPassword}
+                        onChange={handleChange}
+                        required
+                      />
+                      <button
+                        type="button"
+                        className="toggle-password"
+                        onClick={() => setShowConfirm((s) => !s)}
+                      >
+                        {showConfirm ? <FiEyeOff /> : <FiEye />}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {mode === "signup" && (
+                  <div className="terms-group">
+                    <label className="checkbox-container">
+                      <input
+                        type="checkbox"
+                        name="agree"
+                        checked={form.agree}
+                        onChange={handleChange}
+                        required
+                      />
+                      <span className="checkmark">
+                        {form.agree && <FiCheck />}
+                      </span>
+                      I agree to the{" "}
+                      <Link to="/terms" target="_blank">
+                        Terms & Conditions
+                      </Link>
+                    </label>
+                  </div>
+                )}
+
+                <motion.button
+                  type="submit"
+                  className="auth-btn"
+                  disabled={isLoading}
+                >
+                  {mode === "signup"
+                    ? "Send Verification Code"
+                    : "Sign In"}
+                </motion.button>
+              </>
+            ) : (
+              <div className="otp-section">
+                <div className="form-group">
+                  <div className="input-wrapper">
+                    <input
+                      type="text"
+                      placeholder="Enter OTP"
+                      value={otp}
+                      onChange={(e) => setOtp(e.target.value)}
+                      required
+                    />
+                  </div>
+                </div>
+                <motion.button
+                  type="submit"
+                  className="auth-btn"
+                  disabled={isLoading}
+                >
+                  Verify & Sign Up
+                </motion.button>
+              </div>
+            )}
+          </form>
+
+          <div className="auth-footer">
+            {mode === "login" && (
+              <button
+                className="forgot-link"
+                onClick={() => {
+                  closeAuth?.();
+                  navigate("/forgot-password");
+                }}
+              >
+                Forgot password?
+              </button>
+            )}
+            <p>
+              {mode === "login" ? "Don't have an account?" : "Already have one?"}{" "}
+              <button className="mode-toggle-btn" onClick={toggleMode}>
+                {mode === "login" ? "Sign Up" : "Sign In"}
+              </button>
+            </p>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   );
 }

@@ -1,4 +1,3 @@
-// src/components/AdminSidebar.js
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import {
@@ -12,9 +11,13 @@ import {
 } from "react-icons/fa";
 import "../styles/AdminSidebar.css";
 
-const AdminSidebar = ({ onLogout }) => {
+// ← import your auth hook
+import { useAuth } from "../contexts/AuthContext";
+
+const AdminSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const location = useLocation();
+  const location        = useLocation();
+  const { logout }      = useAuth();            // ← grab logout
 
   const toggleSidebar = () => {
     setCollapsed(!collapsed);
@@ -27,7 +30,7 @@ const AdminSidebar = ({ onLogout }) => {
       <div className="sidebar-header">
         {!collapsed && <h3>Admin Panel</h3>}
         <button className="collapse-btn" onClick={toggleSidebar}>
-          <FaBars />
+          {collapsed ? "▶" : "◀"}
         </button>
       </div>
       <ul className="sidebar-menu">
@@ -63,9 +66,8 @@ const AdminSidebar = ({ onLogout }) => {
         </li>
       </ul>
       <div className="sidebar-footer">
-        <button className="logout-btn" onClick={onLogout}>
-          <FaSignOutAlt />
-          {!collapsed && <span> Logout</span>}
+        <button className="logout-btn" onClick={logout}>
+          <FaSignOutAlt /> {!collapsed && "Logout"}
         </button>
       </div>
     </div>

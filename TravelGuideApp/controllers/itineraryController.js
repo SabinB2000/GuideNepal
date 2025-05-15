@@ -1,54 +1,65 @@
 // controllers/itineraryController.js
 const Itinerary = require("../models/Itinerary");
 
-// GET /api/itineraries/admin and GET /api/itineraries/ (public)
+// GET /api/itineraries
 exports.getItineraries = async (req, res) => {
   try {
-    const itineraries = await Itinerary.find().populate("places");
-    res.status(200).json(itineraries);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    const list = await Itinerary.find({ user: req.user._id });
+    res.json(list);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error fetching itineraries" });
   }
 };
 
-// POST /api/itineraries/admin
-exports.addItinerary = async (req, res) => {
+// GET /api/itineraries/:id
+exports.getItineraryById = async (req, res) => {
   try {
-    const { title, description, places } = req.body;
-    const newItinerary = new Itinerary({ title, description, places });
-    await newItinerary.save();
-    res.status(201).json(newItinerary);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    const it = await Itinerary.findById(req.params.id);
+    if (!it) return res.status(404).json({ message: "Not found" });
+    res.json(it);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Server error" });
   }
 };
 
-// PUT /api/itineraries/admin/:id
-exports.editItinerary = async (req, res) => {
+// POST /api/itineraries
+exports.createItinerary = async (req, res) => {
   try {
-    const updatedItinerary = await Itinerary.findByIdAndUpdate(
+    const newIt = new Itinerary({ ...req.body, user: req.user._id });
+    await newIt.save();
+    res.status(201).json(newIt);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ message: "Invalid data", error: err.message });
+  }
+};
+
+// PUT /api/itineraries/:id
+exports.updateItinerary = async (req, res) => {
+  try {
+    const updated = await Itinerary.findByIdAndUpdate(
       req.params.id,
       req.body,
       { new: true }
     );
-    if (!updatedItinerary) {
-      return res.status(404).json({ message: "Itinerary not found" });
-    }
-    res.status(200).json(updatedItinerary);
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    if (!updated) return res.status(404).json({ message: "Not found" });
+    res.json(updated);
+  } catch (err) {
+    console.error(err);
+    res.status(400).json({ message: "Update failed", error: err.message });
   }
 };
 
-// DELETE /api/itineraries/admin/:id
+// DELETE /api/itineraries/:id
 exports.deleteItinerary = async (req, res) => {
   try {
-    const deletedItinerary = await Itinerary.findByIdAndDelete(req.params.id);
-    if (!deletedItinerary) {
-      return res.status(404).json({ message: "Itinerary not found" });
-    }
-    res.status(200).json({ message: "Itinerary deleted successfully" });
-  } catch (error) {
-    res.status(500).json({ message: "Server error", error: error.message });
+    const del = await Itinerary.findByIdAndDelete(req.params.id);
+    if (!del) return res.status(404).json({ message: "Not found" });
+    res.json({ message: "Deleted" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Delete failed" });
   }
 };

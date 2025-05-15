@@ -7,6 +7,9 @@ export default function ImageSlider({
   query,
   slides = 5,
   className = "",
+  showDescriptions = false,
+  description = "",
+  ...props
 }) {
   const [images, setImages] = useState([]);
   const [current, setCurrent] = useState(0);
@@ -47,8 +50,18 @@ export default function ImageSlider({
   }
 
   return (
-    <div className={`image-slider ${className}`}>
-      <img src={images[current]} alt={`${query} ${current + 1}`} />
+    <div className={`image-slider ${className}`} {...props}>
+      {images.map((img, index) => (
+        <div
+          key={index}
+          className={`slide ${index === current ? "active" : ""}`}
+          style={{ backgroundImage: `url(${img})` }}
+        >
+          {showDescriptions && description && index === current && (
+            <div className="image-description">{description}</div>
+          )}
+        </div>
+      ))}
     </div>
   );
 }

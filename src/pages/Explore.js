@@ -1,205 +1,226 @@
-import React, { useEffect, useState } from "react";
-import axiosInstance from "../utils/axiosConfig";
+import React, { useState, useEffect } from "react";
+import { useNavigate }                from "react-router-dom";
+import axiosInstance                  from "../utils/axiosConfig";
+import Swal                           from "sweetalert2";
+import { FiHeart, FiMapPin }          from "react-icons/fi";
 import "../styles/Explore.css";
-import {
-  GoogleMap,
-  LoadScript,
-  Marker,
-  DirectionsRenderer,
-} from "@react-google-maps/api";
 
-const containerStyle = {
-  width: "100%",
-  height: "400px",
-};
+const API_KEY = process.env.REACT_APP_GOOGLE_MAPS_API_KEY;
 
-const UNSPLASH_ACCESS_KEY = "LIoaOeFaFZsQHpmN4LTFfCswzlOLjCMc27sC0ACS0gY";
+// fallback to Google Static Map
+function staticMapUrl(lat, lng, size = "400x200") {
+  return `https://maps.googleapis.com/maps/api/staticmap?center=${lat},${lng}` +
+         `&zoom=15&size=${size}&markers=color:red%7C${lat},${lng}` +
+         `&key=${API_KEY}`;
+}
 
-const Explore = () => {
-  const [places, setPlaces] = useState([]);
-  const [selectedPlace, setSelectedPlace] = useState(null);
-  const [directions, setDirections] = useState(null);
-  const [userLocation, setUserLocation] = useState(null);
-  const [placeImages, setPlaceImages] = useState({});
-  const [navigationSteps, setNavigationSteps] = useState([]);
-  const [itinerary, setItinerary] = useState(null);
+export default function Explore() {
+  const nav = useNavigate();
 
-  const fetchPlaces = async () => {
-    try {
-      const res = await axiosInstance.get("/places/unique");
-      setPlaces(res.data);
-      fetchPlaceImages(res.data);
-    } catch (err) {
-      console.error("Place fetch error:", err);
-    }
-  };
+  const [places,   setPlaces]   = useState([]);
+  const [cats,     setCats]     = useState([]);
+  const [savedIds, setSavedIds] = useState(new Set());
+  const [savedMap, setSavedMap] = useState({});       // placeId → savedEntryId
+  const [expanded, setExpanded] = useState({});
+  const [search,   setSearch]   = useState("");
+  const [results,  setResults]  = useState([]);
+  const [loading,  setLoading]  = useState(true);
+  const [error,    setError]    = useState("");
 
-  const fetchPlaceImages = async (places) => {
-    const updatedImages = {};
-    for (let place of places) {
+  // load DB places + saved‐places
+  useEffect(() => {
+    (async () => {
       try {
-        const res = await fetch(
-          `https://api.unsplash.com/search/photos?query=${place.name}&client_id=${UNSPLASH_ACCESS_KEY}&per_page=1`
-        );
-        const data = await res.json();
-        updatedImages[place._id] = data.results[0]?.urls?.regular || "";
-      } catch (error) {
-        console.error("Image fetch failed for:", place.name);
-        updatedImages[place._id] = "";
+        setLoading(true);
+        const [{ data: db }, { data: saved }] = await Promise.all([
+          axiosInstance.get("/places/db"),
+          axiosInstance.get("/saved-places"),
+        ]);
+
+        setPlaces(db);
+        setCats([...new Set(db.map(p => p.category))]);
+
+        // build saved sets
+        const ids = new Set(saved.map(s => s.placeId));
+        setSavedIds(ids);
+
+        const map = {};
+        saved.forEach(s => { map[s.placeId] = s._id; });
+        setSavedMap(map);
+
+      } catch (e) {
+        console.error(e);
+        setError("Couldn’t load places.");
+      } finally {
+        setLoading(false);
       }
+    })();
+  }, []);
+
+  // Google Places text-search
+  const doSearch = async e => {
+    e.preventDefault();
+    if (!search.trim()) return;
+    try {
+      const { data } = await axiosInstance.get("/places/google", {
+        params: { query: search },
+      });
+      if (data.status !== "OK") throw new Error(data.status);
+
+      setResults(
+        data.results.map(p => ({
+          id:       p.place_id,
+          name:     p.name,
+          category: p.types?.[0] || "Other",
+          desc:     p.formatted_address,
+          coords:   [p.geometry.location.lng, p.geometry.location.lat],
+          photoRef: p.photos?.[0]?.photo_reference || null,
+        }))
+      );
+      setError("");
+    } catch (e) {
+      console.error(e);
+      setError("Search failed.");
+      setResults([]);
     }
-    setPlaceImages(updatedImages);
   };
 
-  const getUserLocation = () => {
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
-        setUserLocation({
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
+  // toggle save ↔ unsave
+  const toggleSave = async (placeId) => {
+    if (savedIds.has(placeId)) {
+      // unsave
+      const entryId = savedMap[placeId];
+      try {
+        await axiosInstance.delete(`/saved-places/${entryId}`);
+        setSavedIds(prev => {
+          const c = new Set(prev);
+          c.delete(placeId);
+          return c;
         });
-      },
-      () => {
-        alert("Location fetch failed. Using Kathmandu by default.");
-        setUserLocation({ lat: 27.7172, lng: 85.324 });
+        setSavedMap(prev => {
+          const c = { ...prev };
+          delete c[placeId];
+          return c;
+        });
+        Swal.fire({ icon: "success", title: "Removed", timer: 800 });
+      } catch (e) {
+        Swal.fire("Error", "Couldn’t remove place", "error");
       }
-    );
-  };
-
-  const generateRoute = (destination) => {
-    if (!userLocation || !destination) return;
-    const directionsService = new window.google.maps.DirectionsService();
-
-    directionsService.route(
-      {
-        origin: userLocation,
-        destination: destination.location,
-        travelMode: window.google.maps.TravelMode.DRIVING,
-      },
-      (result, status) => {
-        if (status === "OK") {
-          setDirections(result);
-          const steps = result.routes[0].legs[0].steps.map((step) => ({
-            instruction: step.instructions.replace(/<[^>]*>/g, ""),
-            distance: step.distance.text,
-            duration: step.duration.text,
-          }));
-          setNavigationSteps(steps);
+    } else {
+      // save
+      try {
+        const res = await axiosInstance.post("/saved-places", { placeId });
+        const entryId = res.data._id;
+        setSavedIds(prev => new Set(prev).add(placeId));
+        setSavedMap(prev => ({ ...prev, [placeId]: entryId }));
+        Swal.fire({ icon: "success", title: "Saved!", timer: 1200 });
+      } catch (e) {
+        if (e.response?.status === 401) {
+          Swal.fire("Login required", "Please sign in to save", "warning");
+          nav("/login");
         } else {
-          console.error("Directions Error:", status);
+          Swal.fire("Error", e.response?.data?.message || e.message, "error");
         }
       }
-    );
-  };
-
-  const handleCreateItinerary = () => {
-    if (selectedPlace && directions) {
-      setItinerary({
-        from: userLocation,
-        to: selectedPlace,
-        steps: navigationSteps,
-      });
     }
   };
 
-  const resetItinerary = () => {
-    setItinerary(null);
-    setNavigationSteps([]);
-    setDirections(null);
-    setSelectedPlace(null);
+  const goMap = coords => {
+    const [lng, lat] = coords;
+    nav(`/map?lat=${lat}&lng=${lng}`);
   };
 
-  useEffect(() => {
-    fetchPlaces();
-    getUserLocation();
-  }, []);
+  if (loading) return <div className="explore-container"><p>Loading…</p></div>;
+  if (error)   return <div className="explore-container"><p className="error">{error}</p></div>;
+
+  // render a grid of cards
+  const renderCards = (list, isSearch = false) => (
+    <div className="places-grid">
+      {list.map(p => {
+        const id     = isSearch ? p.id : p._id;
+        const coords = isSearch ? p.coords : p.location.coordinates;
+        const img    = p.photoRef
+          ? `https://maps.googleapis.com/maps/api/place/photo?maxwidth=600&photoreference=${p.photoRef}&key=${API_KEY}`
+          : (isSearch
+              ? staticMapUrl(coords[1], coords[0])
+              : (p.image || staticMapUrl(coords[1], coords[0])));
+
+        return (
+          <div
+            key={id}
+            className="place-card"
+            onClick={() => nav(`/explore/place/${id}`)}
+          >
+            <img src={img} alt={p.name} />
+            <div className="place-info">
+              <h3>{p.name}</h3>
+              <p className="desc">{p.desc || p.formatted_address}</p>
+              <p className="category">Category: {p.category}</p>
+              <div className="card-actions">
+                <button
+                  className={`save-btn ${savedIds.has(id) ? "saved" : ""}`}
+                  onClick={e => { e.stopPropagation(); toggleSave(id); }}
+                >
+                  <FiHeart /> {savedIds.has(id) ? "Saved" : "Save"}
+                </button>
+                <button
+                  className="nav-btn"
+                  onClick={e => { e.stopPropagation(); goMap(coords); }}
+                >
+                  <FiMapPin /> Navigate
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+    </div>
+  );
 
   return (
     <div className="explore-container">
-      <div className="explore-glass-background"></div>
-      <h2>🗺️ Explore Unique Places in Nepal</h2>
+      <header className="explore-header">
+        <h1>Explore Nepal</h1>
+        <p>Discover the best places to visit</p>
+        <form onSubmit={doSearch} className="search-form">
+          <input
+            className="search-input"
+            placeholder="Search places…"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+          />
+          <button type="submit" className="search-button">Search</button>
+        </form>
+      </header>
 
-      <button className="location-btn" onClick={getUserLocation}>
-        📍 Detect My Location
-      </button>
+      <main className="explore-main">
+        {results.length > 0 && (
+          <section className="search-results">
+            <h2>Search Results</h2>
+            {renderCards(results, true)}
+          </section>
+        )}
 
-      {userLocation && (
-        <p className="debug-coords">
-          Your Coordinates: {userLocation.lat.toFixed(4)}, {userLocation.lng.toFixed(4)}
-        </p>
-      )}
-
-      <div className="place-list">
-        {places.map((place) => (
-          <div
-            key={place._id}
-            className={`place-card ${
-              selectedPlace?._id === place._id ? "selected" : ""
-            }`}
-            onClick={() => {
-              setSelectedPlace(place);
-              generateRoute(place);
-              setItinerary(null);
-            }}
-          >
-            <img
-              src={placeImages[place._id] || `https://source.unsplash.com/400x200/?${place.category},nepal`}
-              alt={place.title || place.name}
-              className="place-img"
-            />
-            <div className="place-details">
-            <h4>{place.title || place.name}</h4>
-            <p>{place.description}</p>
-              <span className="badge">{place.category}</span>
-            </div>
-          </div>
-        ))}
-      </div>
-
-      {selectedPlace && directions && (
-        <div className="itinerary-controls">
-          <button onClick={handleCreateItinerary} className="create-btn">
-            📝 Create Itinerary to {selectedPlace.name}
-          </button>
-        </div>
-      )}
-
-      {itinerary && (
-        <div className="itinerary-details">
-          <h3>📍 Your Itinerary</h3>
-          <p>
-            From: {itinerary.from.lat.toFixed(4)}, {itinerary.from.lng.toFixed(4)}
-            <br />
-            To: {itinerary.to.name}
-          </p>
-          <ol>
-            {itinerary.steps.map((step, idx) => (
-              <li key={idx}>
-                {step.instruction} ({step.distance}, {step.duration})
-              </li>
-            ))}
-          </ol>
-          <button className="reset-btn" onClick={resetItinerary}>Change Itinerary</button>
-        </div>
-      )}
-
-      <div className="map-section">
-        <LoadScript googleMapsApiKey={process.env.REACT_APP_GOOGLE_MAPS_API_KEY}>
-          <GoogleMap
-            mapContainerStyle={containerStyle}
-            center={userLocation || { lat: 27.7172, lng: 85.324 }}
-            zoom={10}
-          >
-            {userLocation && <Marker position={userLocation} label="You" />}
-            {places.map((place) => (
-              <Marker key={place._id} position={place.location} />
-            ))}
-            {directions && <DirectionsRenderer directions={directions} />}
-          </GoogleMap>
-        </LoadScript>
-      </div>
+        {cats.map(cat => {
+          const arr = places.filter(p => p.category === cat);
+          const open = !!expanded[cat];
+          const shown = open ? arr : arr.slice(0, 4);
+          return (
+            <section key={cat} className="category-section">
+              <div className="category-header">
+                <h2>{cat}</h2>
+                <button
+                  className="view-all"
+                  onClick={() => setExpanded(x => ({ ...x, [cat]: !x[cat] }))}
+                >
+                  {open ? "Show Less" : "View All"}
+                </button>
+              </div>
+              {renderCards(shown)}
+            </section>
+          );
+        })}
+      </main>
     </div>
   );
-};
-
-export default Explore;
+}

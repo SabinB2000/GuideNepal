@@ -1,16 +1,14 @@
-// src/routes/profileRoutes.js
 const express = require("express");
 const router = express.Router();
 const { authenticate } = require("../middleware/authMiddleware");
 const { getProfile, updateProfile, changePassword } = require("../controllers/profileController");
-
-// For image uploads via multer
 const multer = require("multer");
 const path = require("path");
 
+// Configure multer for file uploads
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, "uploads/"); // Make sure this folder exists
+    cb(null, "uploads/"); // Ensure this folder exists
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
@@ -19,11 +17,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// GET profile
 router.get("/me", authenticate, getProfile);
-// PUT update profile (optional image)
 router.put("/update", authenticate, upload.single("profilePicture"), updateProfile);
-// PUT change password
 router.put("/change-password", authenticate, changePassword);
 
 module.exports = router;

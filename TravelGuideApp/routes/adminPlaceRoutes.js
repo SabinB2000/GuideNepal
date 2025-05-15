@@ -1,26 +1,15 @@
+// routes/adminPlaceRoutes.js
 const express = require("express");
-const router = express.Router();
+const router  = express.Router();
 const { authenticate, isAdmin } = require("../middleware/authMiddleware");
-const { addPlace, getAllPlaces, deletePlace } = require("../controllers/placeController");
-const Place = require("../models/Place");
+const adminCtrl = require("../controllers/adminPlaceController");
 
-// ✅ Routes
-router.get("/", authenticate, isAdmin, getAllPlaces);
-router.post("/", authenticate, isAdmin, addPlace);
-router.delete("/:id", authenticate, isAdmin, deletePlace);
+// all admin‐place routes require a valid JWT + admin role:
+router.use(authenticate, isAdmin);
 
-router.put("/:id", authenticate, isAdmin, async (req, res) => {
-  try {
-    const { title, description, location, image } = req.body;
-    const updated = await Place.findByIdAndUpdate(
-      req.params.id,
-      { title, description, location, image },
-      { new: true }
-    );
-    res.json(updated);
-  } catch (error) {
-    res.status(500).json({ message: "Update failed", error: error.message });
-  }
-});
+router.get(   "/",       adminCtrl.getAllPlaces);
+router.post(  "/",       adminCtrl.createPlace);
+router.put(   "/:id",    adminCtrl.updatePlace);
+router.delete("/:id",    adminCtrl.deletePlace);
 
 module.exports = router;

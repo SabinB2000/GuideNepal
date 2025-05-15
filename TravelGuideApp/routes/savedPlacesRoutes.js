@@ -1,19 +1,11 @@
+// routes/savedPlacesRoutes.js
 const express = require("express");
-const router = express.Router();
+const router  = express.Router();
 const { authenticate } = require("../middleware/authMiddleware");
-const {
-  getSavedPlaces,
-  addSavedPlace,
-  removeSavedPlace
-} = require("../controllers/savedPlacesController");
+const ctrl    = require("../controllers/savedPlacesController");
 
-// ✅ Get all saved places
-router.get("/", authenticate, getSavedPlaces);
-
-// ✅ Save a place
-router.post("/", authenticate, addSavedPlace);
-
-// ✅ Remove a saved place
-router.delete("/:id", authenticate, removeSavedPlace);
+router.get(   "/",        authenticate, ctrl.getSavedPlaces);
+router.post(  "/",        authenticate, ctrl.addSavedPlace);
+router.delete("/:id",     authenticate, ctrl.removeSavedPlace);
 
 module.exports = router;

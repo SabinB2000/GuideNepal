@@ -9,15 +9,15 @@ import { AuthProvider } from "./contexts/AuthContext";
 
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
-
-
 root.render(
   <BrowserRouter>
-    <AuthProvider>  
+    <AuthProvider>
       <App />
     </AuthProvider>
   </BrowserRouter>
 );
+
+
 
 // ✅ API Functions (Keep These)
 export const fetchProfile = async () => {
