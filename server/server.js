@@ -11,7 +11,7 @@ const path = require("path");
 const app = express();
 connectDB().catch(err => console.error("MongoDB Connection Failed:", err));
 
-app.use(cors({ origin: "http://localhost:3000", credentials: true }));
+app.use(cors({ origin: "process.env.FRONTEND_URL", credentials: true }));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
